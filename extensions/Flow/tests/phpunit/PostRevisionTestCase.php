@@ -14,7 +14,6 @@ use Flow\Model\Workflow;
 use Flow\Model\UserTuple;
 use Flow\Model\UUID;
 use Flow\OccupationController;
-use MediaWiki\MediaWikiServices;
 use SplQueue;
 use User;
 
@@ -101,7 +100,7 @@ class PostRevisionTestCase extends FlowTestCase {
 	 * With no arguments tossed in, default data (resembling a newly-created
 	 * topic title) will be returned.
 	 *
-	 * @param array $row DB row data (only specify override columns)
+	 * @param array[optional] $row DB row data (only specify override columns)
 	 * @return array
 	 */
 	protected function generateRow( array $row = [] ) {
@@ -182,11 +181,9 @@ class PostRevisionTestCase extends FlowTestCase {
 	 * With no arguments tossed in, a default revision (resembling a newly-
 	 * created topic title) will be returned.
 	 *
-	 * @note This must not be called from a data provider, since it accesses the database!
-	 *
-	 * @param array $row DB row data (only specify override columns)
-	 * @param PostRevision[] $children Array of child PostRevision objects
-	 * @param int $depth Depth of the PostRevision object
+	 * @param array[optional] $row DB row data (only specify override columns)
+	 * @param array[optional] $children Array of child PostRevision objects
+	 * @param int[optional] $depth Depth of the PostRevision object
 	 * @return PostRevision
 	 */
 	protected function generateObject( array $row = [], $children = [], $depth = 0 ) {
@@ -235,8 +232,7 @@ class PostRevisionTestCase extends FlowTestCase {
 			/** @var OccupationController $occupationController */
 			$occupationController = Container::get( 'occupation_controller' );
 			// make sure user has rights to create board
-			$user->mRights = array_merge( MediaWikiServices::getInstance()->getPermissionManager()
-				->getUserPermissions( $user ), [ 'flow-create-board' ] );
+			$user->mRights = array_merge( $user->getRights(), [ 'flow-create-board' ] );
 			$occupationController->safeAllowCreation( $title, $user );
 			$occupationController->ensureFlowRevision( new \Article( $title ), $boardWorkflow );
 

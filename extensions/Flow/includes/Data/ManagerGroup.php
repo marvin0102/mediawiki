@@ -63,8 +63,7 @@ class ManagerGroup {
 	 */
 	public function getStorage( $className ) {
 		if ( !isset( $this->classMap[$className] ) ) {
-			throw new DataModelException( "Request for '$className' is not in classmap: " .
-				implode( ', ', array_keys( $this->classMap ) ), 'process-data' );
+			throw new DataModelException( "Request for '$className' is not in classmap: " . implode( ', ', array_keys( $this->classMap ) ), 'process-data' );
 		}
 		$key = $this->classMap[$className];
 		$this->used[$key] = true;
@@ -87,7 +86,7 @@ class ManagerGroup {
 	 * @param array $metadata
 	 * @throws DataModelException
 	 */
-	protected function multiMethod( $method, array $objects, array $metadata ) {
+	protected function multiMethod( $method, $objects, array $metadata ) {
 		$itemsByClass = [];
 
 		foreach ( $objects as $object ) {
@@ -124,7 +123,10 @@ class ManagerGroup {
 	protected function call( $method, $args ) {
 		$className = array_shift( $args );
 
-		return $this->getStorage( $className )->$method( ...$args );
+		return call_user_func_array(
+			[ $this->getStorage( $className ), $method ],
+			$args
+		);
 	}
 
 	public function get( /* ... */ ) {

@@ -10,7 +10,7 @@ use Flow\Import\IImportHeader;
 use Flow\Import\IImportPost;
 use Flow\Import\IImportTopic;
 use Flow\Import\ImportException;
-use Flow\Import\LiquidThreadsApi\ImportTopic;
+use Flow\Import\LiquidThreadsApi\ImportTopic as LqtImportTopic;
 use Flow\Import\PageImportState;
 use Flow\Import\TopicImportState;
 use Flow\Model\PostRevision;
@@ -79,7 +79,7 @@ class LqtNotifications implements Postprocessor {
 	 * @param EchoEvent $event
 	 * @param int $batchSize
 	 * @throws ImportException
-	 * @return EchoCallbackIterator
+	 * @return \Iterator[User]
 	 */
 	public function locateUsersWithPendingLqtNotifications( EchoEvent $event, $batchSize = 500 ) {
 		$activeThreadId = $event->getExtraParam( 'lqtThreadId' );
@@ -110,7 +110,7 @@ class LqtNotifications implements Postprocessor {
 	}
 
 	public function afterTopicImported( TopicImportState $state, IImportTopic $topic ) {
-		if ( !$topic instanceof ImportTopic ) {
+		if ( !$topic instanceof LqtImportTopic ) {
 			return;
 		}
 		if ( empty( $this->postsImported ) ) {

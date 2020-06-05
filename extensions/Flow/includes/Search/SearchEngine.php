@@ -8,7 +8,9 @@ use Elastica\Query;
 use Flow\Exception\InvalidParameterException;
 
 class SearchEngine extends \SearchEngine {
-
+	/**
+	 * @var int
+	 */
 	const MAX_OFFSET = 100000;
 
 	/**
@@ -74,7 +76,6 @@ class SearchEngine extends \SearchEngine {
 
 		// only apply filters if there are any
 		if ( $filter->toArray() ) {
-			// @phan-suppress-next-line PhanTypeMismatchArgument
 			$query->setPostFilter( $filter );
 		}
 

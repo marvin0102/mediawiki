@@ -6,8 +6,6 @@ use DateTime;
 use DateTimeZone;
 use DeferredUpdates;
 use DerivativeContext;
-use Exception;
-use Flow\Block\AbstractBlock;
 use Flow\DbFactory;
 use Flow\Collection\HeaderCollection;
 use Flow\Content\BoardContent;
@@ -17,11 +15,7 @@ use Flow\OccupationController;
 use Flow\Conversion\Utils;
 use Flow\WorkflowLoader;
 use Flow\WorkflowLoaderFactory;
-use FormatJson;
 use IContextSource;
-use MediaWiki\Logger\LoggerFactory;
-use MediaWiki\MediaWikiServices;
-use MediaWiki\Storage\RevisionRecord;
 use Psr\Log\LoggerInterface;
 use MovePage;
 use Parser;
@@ -109,11 +103,15 @@ class OptInController {
 	 * @param User $user User that owns the talk page
 	 */
 	public function initiateChange( $action, Title $talkpage, User $user ) {
+		$flowDbw = $this->dbFactory->getDB( DB_MASTER );
+		$wikiDbw = $this->dbFactory->getWikiDB( DB_MASTER );
+
 		$outerMethod = __METHOD__;
 		$logger = $this->logger;
 
+		// We need both since we use both databases.
 		DeferredUpdates::addCallableUpdate(
-			function () use ( $logger, $outerMethod, $action, $talkpage, $user ) {
+			function () use ( $logger, $outerMethod, $action, $talkpage, $user, $wikiDbw, $flowDbw ) {
 				try {
 					if ( $action === self::$ENABLE ) {
 						$this->enable( $talkpage, $user );
@@ -122,24 +120,25 @@ class OptInController {
 					} else {
 						$logger->error( $outerMethod . ': unrecognized action: ' . $action );
 					}
-				} catch ( Exception $exception ) {
+				} catch ( \Throwable $t ) {
 					$logger->error(
 						$outerMethod . ' failed to {action} Flow on \'{talkpage}\' for user \'{user}\'. {message} {trace}',
 						[
 							'action' => $action,
 							'talkpage' => $talkpage->getPrefixedText(),
 							'user' => $user->getName(),
-							'message' => $exception->getMessage(),
-							'trace' => $exception->getTraceAsString(),
+							'message' => $t->getMessage(),
+							'trace' => $t->getTraceAsString(),
 						]
 					);
 
-					// Rollback both Flow and Core DBs.
-					MediaWikiServices::getInstance()->getDBLoadBalancerFactory()
-						->rollbackMasterChanges( $outerMethod );
+					// rollback both Flow and Core DBs
+					$flowDbw->rollback( $outerMethod );
+					$wikiDbw->rollback( $outerMethod );
 				}
 			},
-			DeferredUpdates::POSTSEND
+			DeferredUpdates::POSTSEND,
+			[ $wikiDbw, $flowDbw ]
 		);
 	}
 
@@ -217,7 +216,6 @@ class OptInController {
 	 * @param string $reason
 	 */
 	private function movePage( Title $from, Title $to, $reason = '' ) {
-		$this->occupationController->forceAllowCreation( $to );
 		$mp = new MovePage( $from, $to );
 		$mp->move( $this->user, $reason, false );
 
@@ -234,7 +232,7 @@ class OptInController {
 		 * page is no longer valid.
 		 */
 		$from->resetArticleID( 0 );
-		$linkCache = MediaWikiServices::getInstance()->getLinkCache();
+		$linkCache = \LinkCache::singleton();
 		$linkCache->addBadLinkObj( $from );
 
 		/*
@@ -246,7 +244,7 @@ class OptInController {
 
 	/**
 	 * @param string $msgKey
-	 * @param mixed $args
+	 * @param array $args
 	 * @throws ImportException
 	 */
 	private function fatal( $msgKey, $args = [] ) {
@@ -255,7 +253,7 @@ class OptInController {
 
 	/**
 	 * @param string $str
-	 * @return string[]
+	 * @return array
 	 */
 	private function fromNewlineSeparated( $str ) {
 		return explode( "\n", $str );
@@ -309,7 +307,6 @@ class OptInController {
 	 * @param string $summary
 	 * @throws ImportException
 	 * @throws \MWException
-	 * @param-taint escapes_escaped $contentText
 	 */
 	private function createRevision( Title $title, $contentText, $summary ) {
 		$page = WikiPage::factory( $title );
@@ -346,7 +343,6 @@ class OptInController {
 
 		$loader = $loaderFactory->createWorkflowLoader( $title );
 		$blocks = $loader->getBlocks();
-		$this->logBlockErrors( $blocks );
 
 		if ( !$boardDescription ) {
 			$boardDescription = ' ';
@@ -393,7 +389,6 @@ class OptInController {
 		$content = $this->getFormattedArchiveTemplate( $title ) . "\n\n" . $content;
 
 		$addTemplateReason = wfMessage( 'flow-beta-feature-add-archive-template-edit-summary' )->inContentLanguage()->plain();
-		// @phan-suppress-next-line SecurityCheck-DoubleEscaped
 		$this->createRevision(
 			$archiveTitle,
 			$content,
@@ -436,7 +431,7 @@ class OptInController {
 		$page->loadPageData( 'fromdbmaster' );
 		$revision = $page->getRevision();
 		if ( $revision ) {
-			$content = $revision->getContent( RevisionRecord::FOR_PUBLIC );
+			$content = $revision->getContent( Revision::FOR_PUBLIC );
 			if ( $content instanceof WikitextContent ) {
 				return $content->getNativeData();
 			}
@@ -464,7 +459,7 @@ class OptInController {
 	 * @param array $args
 	 * @return string
 	 */
-	private function formatTemplate( $name, array $args ) {
+	private function formatTemplate( $name, $args ) {
 		$arguments = implode( '|',
 			array_map(
 				function ( $key, $value ) {
@@ -481,7 +476,7 @@ class OptInController {
 	 * @param callable $newDescriptionCallback
 	 * @param string $format
 	 * @throws ImportException
-	 * @throws InvalidDataException
+	 * @throws \Flow\Exception\InvalidDataException
 	 */
 	private function editBoardDescription( Title $title, callable $newDescriptionCallback, $format = 'html' ) {
 		/*
@@ -522,7 +517,7 @@ class OptInController {
 		$content = $revision->getContentRaw();
 		$content = Utils::convert( $revision->getContentFormat(), $format, $content, $title );
 
-		$newDescription = $newDescriptionCallback( $content );
+		$newDescription = call_user_func( $newDescriptionCallback, $content );
 
 		$action = 'edit-header';
 		$params = [
@@ -540,7 +535,6 @@ class OptInController {
 		$loader = $factory->createWorkflowLoader( $title, $workflowId );
 
 		$blocks = $loader->getBlocks();
-		$this->logBlockErrors( $blocks );
 
 		$blocksToCommit = $loader->handleSubmit(
 			$this->context,
@@ -579,17 +573,16 @@ class OptInController {
 	 * @throws ImportException
 	 */
 	private function removeArchiveTemplateFromWikitextTalkpage( Title $title ) {
-		$wtContent = $this->getContent( $title );
-		if ( !$wtContent ) {
+		$content = $this->getContent( $title );
+		if ( !$content ) {
 			return;
 		}
 
-		$content = Utils::convert( 'wikitext', 'html', $wtContent, $title );
+		$content = Utils::convert( 'wikitext', 'html', $content, $title );
 		$templateName = wfMessage( 'flow-importer-wt-converted-archive-template' )->inContentLanguage()->plain();
 
 		$newContent = TemplateHelper::removeFromHtml( $content, $templateName );
 
-		// @phan-suppress-next-line SecurityCheck-DoubleEscaped
 		$this->createRevision(
 			$title,
 			Utils::convert( 'html', 'wikitext', $newContent, $title ),
@@ -637,8 +630,7 @@ class OptInController {
 	 */
 	private function editWikitextContent( Title $title, $reason, callable $newDescriptionCallback, $format = 'html' ) {
 		$content = Utils::convert( 'wikitext', $format, $this->getContent( $title ), $title );
-		$newContent = $newDescriptionCallback( $content );
-		// @phan-suppress-next-line SecurityCheck-DoubleEscaped
+		$newContent = call_user_func( $newDescriptionCallback, $content );
 		$this->createRevision(
 			$title,
 			Utils::convert( $format, 'wikitext', $newContent, $title ),
@@ -688,35 +680,5 @@ class OptInController {
 			'html' );
 
 		return $flowArchiveTitle;
-	}
-
-	/**
-	 * @param array $blocks
-	 */
-	private function logBlockErrors( array $blocks ) {
-		$errors = [];
-		/** @var AbstractBlock $block */
-		foreach ( $blocks as $block ) {
-			if ( $block->hasErrors() ) {
-				$blockErrors = $block->getErrors();
-				foreach ( $blockErrors as $blockErrorType ) {
-					$errors[ $block->getName() ] = [
-						'type' => $blockErrorType,
-						'message' => $block->getErrorMessage( $blockErrorType ),
-						'extra' => $block->getErrorExtra( $blockErrorType )
-					];
-				}
-			}
-		}
-		if ( $errors ) {
-			LoggerFactory::getInstance( 'Flow' )->error(
-				'Found {count} block errors for user {user_id}',
-				[
-					'count' => count( $errors ),
-					'user_id' => RequestContext::getMain()->getUser()->getId(),
-					'errors' => FormatJson::encode( $errors )
-				]
-			);
-		}
 	}
 }

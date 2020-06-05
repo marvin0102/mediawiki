@@ -6,12 +6,12 @@
 	 *
 	 * @constructor
 	 * @param {Object} [representations]
-	 *  {
-	 *    content: "content in the default format",
-	 *    format: "name of the default format",
-	 *    "(other format name 1)": "content in the specified format"
-	 *    "(other format name n)": "content in the specified format"
-	 *  }
+	 * 	{
+	 * 		content: "content in the default format",
+	 * 		format: "name of the default format",
+	 * 		"(other format name 1)": "content in the specified format"
+	 * 		"(other format name n)": "content in the specified format"
+	 * 	}
 	 */
 	mw.flow.dm.Content = function mwFlowContent( representations ) {
 		// Mixin constructor
@@ -48,7 +48,7 @@
 
 		format = format || this.defaultFormat;
 
-		if ( Object.prototype.hasOwnProperty.call( this.contentRepresentations, format ) ) {
+		if ( this.contentRepresentations.hasOwnProperty( format ) ) {
 			return this.contentRepresentations[ format ];
 		}
 		return null;
@@ -70,7 +70,7 @@
 			this.contentRepresentations[ this.defaultFormat ] = representations.content;
 
 			for ( format in representations ) {
-				if ( Object.prototype.hasOwnProperty.call( representations, format ) ) {
+				if ( representations.hasOwnProperty( format ) ) {
 					this.contentRepresentations[ format ] = representations[ format ];
 				}
 			}

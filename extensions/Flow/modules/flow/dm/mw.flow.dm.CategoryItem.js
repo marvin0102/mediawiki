@@ -10,8 +10,10 @@
 	 * @param {Object} [config] Configuration options
 	 */
 	mw.flow.dm.CategoryItem = function mwFlowDmCategoryItem( name, config ) {
+		config = config || {};
+
 		// Parent constructor
-		mw.flow.dm.CategoryItem.super.call( this, config );
+		mw.flow.dm.CategoryItem.parent.call( this, config );
 
 		this.setId( name );
 		this.setExists( !!config.exists );

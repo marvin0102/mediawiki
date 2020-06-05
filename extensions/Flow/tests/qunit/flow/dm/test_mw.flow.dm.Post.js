@@ -487,24 +487,26 @@ QUnit.test( 'Hierarchical post structure', function ( assert ) {
 	subsubreplies = subreplies[ 0 ].getItems();
 
 	// Posts
-	assert.strictEqual( posts.length, 2, 'Two base posts.' );
+	assert.equal( posts.length, 2, 'Two base posts.' );
 
 	// Replies
-	assert.strictEqual( replies.length, 2, 'Two replies.' );
-	assert.strictEqual( replies[ 0 ].getContent(), 'Reply #1', 'Reply #1 has correct content' );
-	assert.strictEqual( replies[ 1 ].getContent(), 'Reply #2', 'Reply #2 has correct content' );
+	assert.equal( replies.length, 2, 'Two replies.' );
+	assert.equal( replies[ 0 ].getContent(), 'Reply #1', 'Reply #1 has correct content' );
+	assert.equal( replies[ 1 ].getContent(), 'Reply #2', 'Reply #2 has correct content' );
 
 	// Sub replies
-	assert.strictEqual( subreplies.length, 2, 'Two sub replies.' );
-	assert.strictEqual( subreplies[ 0 ].getContent(), 'Sub reply #1', 'Sub reply #1 has correct content' );
-	assert.strictEqual( subreplies[ 1 ].getContent(), 'Sub reply #2', 'Sub reply #2 has correct content' );
+	assert.equal( subreplies.length, 2, 'Two sub replies.' );
+	assert.equal( subreplies[ 0 ].getContent(), 'Sub reply #1', 'Sub reply #1 has correct content' );
+	assert.equal( subreplies[ 1 ].getContent(), 'Sub reply #2', 'Sub reply #2 has correct content' );
 
 	// Sub sub reply
-	assert.strictEqual( subsubreplies.length, 1, 'One sub-sub replies.' );
-	assert.strictEqual( subsubreplies[ 0 ].getContent(), 'Sub sub reply #1', 'Sub-sub reply #1 has correct content' );
+	assert.equal( subsubreplies.length, 1, 'One sub-sub replies.' );
+	assert.equal( subsubreplies[ 0 ].getContent(), 'Sub sub reply #1', 'Sub-sub reply #1 has correct content' );
 
 	// Workflow Ids
-	assert.strictEqual( posts[ 0 ].getWorkflowId(), topic.getId(), 'Posts: WorkflowId is topic Id' );
-	assert.strictEqual( replies[ 0 ].getWorkflowId(), topic.getId(), 'Replies: WorkflowId is topic Id' );
-	assert.strictEqual( subreplies[ 0 ].getWorkflowId(), topic.getId(), 'Sub replies: WorkflowId is topic Id' );
+	assert.equal( posts[ 0 ].getWorkflowId(), topic.getId(), 'Posts: WorkflowId is topic Id' );
+	assert.equal( replies[ 0 ].getWorkflowId(), topic.getId(), 'Replies: WorkflowId is topic Id' );
+	assert.equal( subreplies[ 0 ].getWorkflowId(), topic.getId(), 'Sub replies: WorkflowId is topic Id' );
+
+	assert.expect( 12 );
 } );

@@ -42,12 +42,10 @@ class FeedItemFormatter extends AbstractFormatter {
 		// is always the most specific, we use a similar pattern
 		// to above in TemplateHelper::historyTimestamp too.
 		if ( $url === '' && $data['links'] ) {
-			$keys = array_keys( $data['links'] );
-			$link = reset( $keys );
+			$link = reset( array_keys( $data['links'] ) );
 			$url = $data['links'][$link]->getFullURL();
 		}
 
-		// @phan-suppress-next-line SecurityCheck-DoubleEscaped
 		return new FeedItem(
 			$row->workflow->getArticleTitle()->getPrefixedText(),
 			$this->formatDescription( $data, $ctx ),

@@ -1,4 +1,4 @@
-( function () {
+( function ( $, mw, OO ) {
 	mw.flow = mw.flow || {};
 
 	/**
@@ -30,8 +30,7 @@
 	);
 
 	mw.flow.MessagePoster.prototype.post = function ( subject, body ) {
-		// Parent method
-		mw.flow.MessagePoster.super.prototype.post.apply( this, arguments );
+		mw.flow.MessagePoster.parent.prototype.post.call( this, subject, body );
 
 		return this.api.postWithToken( 'csrf', {
 			action: 'flow',
@@ -48,4 +47,4 @@
 	};
 
 	mw.messagePoster.factory.register( 'flow-board', mw.flow.MessagePoster );
-}() );
+}( jQuery, mediaWiki, OO ) );

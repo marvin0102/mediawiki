@@ -62,19 +62,12 @@ class AbuseFilter implements SpamFilter {
 	 * @param Title $title
 	 * @param Title $ownerTitle
 	 * @return Status
-	 * @suppress PhanParamReqAfterOpt Nullable, not optional
 	 */
-	public function validate(
-		IContextSource $context,
-		AbstractRevision $newRevision,
-		AbstractRevision $oldRevision = null,
-		Title $title,
-		Title $ownerTitle
-	) {
+	public function validate( IContextSource $context, AbstractRevision $newRevision, AbstractRevision $oldRevision = null, Title $title, Title $ownerTitle ) {
 		$vars = \AbuseFilter::getEditVars( $title );
 		$vars->addHolders(
 			\AbuseFilter::generateUserVars( $context->getUser() ),
-			\AbuseFilter::generateTitleVars( $title, 'PAGE' ),
+			\AbuseFilter::generateTitleVars( $title, 'ARTICLE' ),
 			\AbuseFilter::generateTitleVars( $ownerTitle, 'BOARD' )
 		);
 
@@ -97,7 +90,7 @@ class AbuseFilter implements SpamFilter {
 		$vars->setLazyLoadVar( 'old_wikitext', 'FlowRevisionContent', [ 'revision' => $oldRevision ] );
 		$vars->setLazyLoadVar( 'old_size', 'length', [ 'length-var' => 'old_wikitext' ] );
 
-		return \AbuseFilter::filterAction( $vars, $title, $this->group, $context->getUser() );
+		return \AbuseFilter::filterAction( $vars, $title, $this->group );
 	}
 
 	/**
@@ -118,10 +111,12 @@ class AbuseFilter implements SpamFilter {
 	public function lazyLoadMethods() {
 		return [
 			/**
+			 * @param string $method: Method to generate the variable
 			 * @param \AbuseFilterVariableHolder $vars
 			 * @param array $parameters Parameters with data to compute the value
+			 * @param mixed &$result Result of the computation
 			 */
-			'FlowRevisionContent' => function ( \AbuseFilterVariableHolder $vars, array $parameters ) {
+			'FlowRevisionContent' => function ( \AbuseFilterVariableHolder $vars, $parameters ) {
 				if ( !isset( $parameters['revision'] ) ) {
 					return '';
 				}

@@ -1,6 +1,6 @@
 {
 	"name": "Flow",
-	"version": "1.1.1",
+	"version": "1.1",
 	"author": [
 		"Erik Bernhardson",
 		"Stephane Bisson",
@@ -22,7 +22,7 @@
 	"license-name": "GPL-2.0-or-later",
 	"type": "other",
 	"requires": {
-		"MediaWiki": ">= 1.34.0"
+		"MediaWiki": ">= 1.31.0"
 	},
 	"callback": "FlowHooks::registerExtension",
 	"APIModules": {
@@ -66,7 +66,7 @@
 			"flow-delete": true,
 			"flow-edit-post": true
 		},
-		"suppress": {
+		"oversight": {
 			"flow-suppress": true
 		},
 		"flow-bot": {
@@ -85,9 +85,7 @@
 			"flow-lock": true
 		},
 		"delete": {
-			"flow-delete": true
-		},
-		"oversight": {
+			"flow-delete": true,
 			"flow-suppress": true
 		}
 	},
@@ -187,8 +185,6 @@
 				"flow-edit-header-placeholder",
 				"flow-edit-header-submit",
 				"flow-edit-header-submit-anonymously",
-				"flow-edit-header-submit-publish",
-				"flow-edit-header-submit-anonymously-publish",
 				"flow-edit-title-submit",
 				"flow-edit-title-submit-anonymously",
 				"flow-edit-post-submit",
@@ -204,8 +200,6 @@
 				"flow-post-action-edit-post",
 				"flow-post-action-edit-post-submit",
 				"flow-post-action-edit-post-submit-anonymously",
-				"flow-post-action-edit-post-submit-publish",
-				"flow-post-action-edit-post-submit-anonymously-publish",
 				"flow-post-action-hide-post",
 				"flow-post-action-unhide-post",
 				"flow-post-action-post-history",
@@ -400,7 +394,7 @@
 			"localBasePath": "",
 			"remoteExtPath": "Flow",
 			"scripts": [
-				"modules/libs/handlebars-v3.0.0.js",
+				"vendor/modules/handlebars-v3.0.0.js",
 				"modules/handlebars.js"
 			],
 			"dependencies": [
@@ -428,7 +422,6 @@
 				"ext.flow.jquery.findWithParent",
 				"mediawiki.api",
 				"mediawiki.Title",
-				"mediawiki.notify",
 				"mediawiki.user",
 				"mediawiki.Uri",
 				"jquery.throttle-debounce"
@@ -541,6 +534,7 @@
 				"oojs-ui.styles.icons-editing-advanced",
 				"oojs-ui.styles.icons-user",
 				"mediawiki.api",
+				"mediawiki.api.options",
 				"mediawiki.Title",
 				"mediawiki.user",
 				"mediawiki.util",
@@ -580,6 +574,7 @@
 				"ext.flow.jquery.conditionalScroll",
 				"ext.flow.ui",
 				"mediawiki.api",
+				"mediawiki.api.options",
 				"mediawiki.user",
 				"mediawiki.util"
 			],
@@ -601,11 +596,11 @@
 				"editor/editors/visualeditor/mw.flow.ve.UserCache.js",
 				"editor/editors/visualeditor/ui/inspectors/mw.flow.ve.ui.MentionInspector.js",
 				"editor/editors/visualeditor/ui/tools/mw.flow.ve.ui.MentionInspectorTool.js",
-				"editor/editors/visualeditor/ui/tools/mw.flow.ve.ui.MWEditModeTool.js",
 				"editor/editors/visualeditor/ui/contextitem/mw.flow.ve.ui.MentionContextItem.js",
 				"editor/editors/visualeditor/ui/widgets/mw.flow.ve.ui.MentionTargetInputWidget.js",
 				"editor/editors/visualeditor/mw.flow.ve.CommandRegistry.js",
-				"editor/editors/visualeditor/mw.flow.ve.SequenceRegistry.js"
+				"editor/editors/visualeditor/mw.flow.ve.SequenceRegistry.js",
+				"flow/ui/tools/mw.flow.ui.MWEditModeTool.js"
 			],
 			"styles": [
 				"editor/editors/visualeditor/mw.flow.ve.Target.less"
@@ -621,6 +616,8 @@
 				"mediawiki.editfont.styles",
 				"oojs-ui.styles.icons-editing-advanced",
 				"ext.flow.visualEditor.icons",
+				"site",
+				"user",
 				"mediawiki.api",
 				"mediawiki.util"
 			],
@@ -724,7 +721,6 @@
 		"DeletedContributionsLineEnding": "FlowHooks::onDeletedContributionsLineEnding",
 		"ApiFeedContributions::feedItem": "FlowHooks::onContributionsFeedItem",
 		"AbuseFilter-builder": "FlowHooks::onAbuseFilterBuilder",
-		"AbuseFilter-deprecatedVariables": "FlowHooks::onAbuseFilterDeprecatedVariables",
 		"AbuseFilter-computeVariable": "FlowHooks::onAbuseFilterComputeVariable",
 		"AbortEmailNotification": "FlowHooks::onAbortEmailNotification",
 		"BeforeDisplayOrangeAlert": "FlowHooks::onBeforeDisplayOrangeAlert",
@@ -922,18 +918,14 @@
 		"FlowServerCompileTemplates": {
 			"value": false
 		},
+		"FlowEventLogging": {
+			"value": false
+		},
 		"FlowEnableOptInBetaFeature": {
 			"value": false
 		},
 		"FlowReadOnly": {
 			"value": false
-		}
-	},
-	"attributes": {
-		"EventLogging": {
-			"Schemas": {
-				"FlowReplies": 10561344
-			}
 		}
 	},
 	"load_composer_autoloader": true,
@@ -977,7 +969,7 @@
 		"Flow\\Block\\BoardHistoryBlock": "includes/Block/BoardHistory.php",
 		"Flow\\Block\\HeaderBlock": "includes/Block/Header.php",
 		"Flow\\Block\\TopicBlock": "includes/Block/Topic.php",
-		"Flow\\Block\\TopicListBlock": "includes/Block/TopicListBlock.php",
+		"Flow\\Block\\TopicListBlock": "includes/Block/TopicList.php",
 		"Flow\\Block\\TopicSummaryBlock": "includes/Block/TopicSummary.php",
 		"Flow\\BoardMover": "includes/BoardMover.php",
 		"Flow\\Collection\\AbstractCollection": "includes/Collection/AbstractCollection.php",
@@ -1045,7 +1037,6 @@
 		"Flow\\Data\\Utils\\SortRevisionsByRevisionId": "includes/Data/Utils/SortRevisionsByRevisionId.php",
 		"Flow\\Data\\Utils\\UserMerger": "includes/Data/Utils/UserMerger.php",
 		"Flow\\DbFactory": "includes/DbFactory.php",
-		"Flow\\Diff\\FlowBoardContentDiffView": "includes/Diff/FlowBoardContentDiffView.php",
 		"Flow\\Dump\\Exporter": "includes/Dump/Exporter.php",
 		"Flow\\Dump\\Importer": "includes/Dump/Importer.php",
 		"Flow\\Exception\\CatchableFatalErrorException": "includes/Exception/CatchableFatalErrorException.php",
@@ -1202,7 +1193,6 @@
 		"Flow\\Parsoid\\Fixer": "includes/Parsoid/Fixer.php",
 		"Flow\\Parsoid\\Fixer\\BadImageRemover": "includes/Parsoid/Fixer/BadImageRemover.php",
 		"Flow\\Parsoid\\Fixer\\BaseHrefFixer": "includes/Parsoid/Fixer/BaseHrefFixer.php",
-		"Flow\\Parsoid\\Fixer\\EmptyNodeFixer": "includes/Parsoid/Fixer/EmptyNodeFixer.php",
 		"Flow\\Parsoid\\Fixer\\ExtLinkFixer": "includes/Parsoid/Fixer/ExtLinkFixer.php",
 		"Flow\\Parsoid\\Fixer\\WikiLinkFixer": "includes/Parsoid/Fixer/WikiLinkFixer.php",
 		"Flow\\Parsoid\\ReferenceExtractor": "includes/Parsoid/ReferenceExtractor.php",
@@ -1246,15 +1236,80 @@
 		"Flow\\TalkpageManager": "includes/TalkpageManager.php",
 		"Flow\\TemplateHelper": "includes/TemplateHelper.php",
 		"Flow\\Templating": "includes/Templating.php",
-		"Flow\\Tests\\Api\\ApiTestCase": "tests/phpunit/Api/ApiTestCase.php",
+		"Flow\\Tests\\Api\\ApiFlowEditHeaderTest": "tests/phpunit/api/ApiFlowEditHeaderTest.php",
+		"Flow\\Tests\\Api\\ApiFlowEditPostTest": "tests/phpunit/api/ApiFlowEditPostTest.php",
+		"Flow\\Tests\\Api\\ApiFlowEditTitleTest": "tests/phpunit/api/ApiFlowEditTitleTest.php",
+		"Flow\\Tests\\Api\\ApiFlowEditTopicSummaryTest": "tests/phpunit/api/ApiFlowEditTopicSummaryTest.php",
+		"Flow\\Tests\\Api\\ApiFlowLockTopicTest": "tests/phpunit/api/ApiFlowLockTopicTest.php",
+		"Flow\\Tests\\Api\\ApiFlowModeratePostTest": "tests/phpunit/api/ApiFlowModeratePostTest.php",
+		"Flow\\Tests\\Api\\ApiFlowModerateTopicTest": "tests/phpunit/api/ApiFlowModerateTopicTest.php",
+		"Flow\\Tests\\Api\\ApiFlowReplyTest": "tests/phpunit/api/ApiFlowReplyTest.php",
+		"Flow\\Tests\\Api\\ApiFlowViewHeaderTest": "tests/phpunit/api/ApiFlowViewHeaderTest.php",
+		"Flow\\Tests\\Api\\ApiFlowViewTopicListTest": "tests/phpunit/api/ApiFlowViewTopicListTest.php",
+		"Flow\\Tests\\Api\\ApiTestCase": "tests/phpunit/api/ApiTestCase.php",
+		"Flow\\Tests\\Api\\ApiWatchTopicTest": "tests/phpunit/api/ApiWatchTopicTest.php",
+		"Flow\\Tests\\BlockFactoryTest": "tests/phpunit/BlockFactoryTest.php",
+		"Flow\\Tests\\Block\\TopicListTest": "tests/phpunit/Block/TopicListTest.php",
+		"Flow\\Tests\\Collection\\PostCollectionTest": "tests/phpunit/Collection/PostCollectionTest.php",
+		"Flow\\Tests\\Collection\\RevisionCollectionPermissionsTest": "tests/phpunit/Collection/RevisionCollectionPermissionsTest.php",
+		"Flow\\Tests\\ContainerTest": "tests/phpunit/ContainerTest.php",
+		"Flow\\Tests\\Conversion\\ConversionUtilsTest": "tests/phpunit/Conversion/UtilsTest.php",
+		"Flow\\Tests\\Data\\CachingObjectManagerTest": "tests/phpunit/Data/CachingObjectMapperTest.php",
+		"Flow\\Tests\\Data\\FlowNothingTest": "tests/phpunit/Data/NothingTest.php",
+		"Flow\\Tests\\Data\\IndexTest": "tests/phpunit/Data/IndexTest.php",
+		"Flow\\Tests\\Data\\Listener\\RecentChangesListenerTest": "tests/phpunit/Data/Listener/RecentChangesListenerTest.php",
+		"Flow\\Tests\\Data\\ManagerGroupTest": "tests/phpunit/Data/ManagerGroupTest.php",
+		"Flow\\Tests\\Data\\ObjectLocatorTest": "tests/phpunit/Data/ObjectLocatorTest.php",
+		"Flow\\Tests\\Data\\Pager\\PagerTest": "tests/phpunit/Data/Pager/PagerTest.php",
+		"Flow\\Tests\\Data\\Storage\\RevisionStorageTest": "tests/phpunit/Data/Storage/RevisionStorageTest.php",
+		"Flow\\Tests\\Data\\UserNameBatchTest": "tests/phpunit/Data/UserNameBatchTest.php",
+		"Flow\\Tests\\Data\\UserNameListenerTest": "tests/phpunit/Data/UserNameListenerTest.php",
+		"Flow\\Tests\\FlowActionsTest": "tests/phpunit/FlowActionsTest.php",
 		"Flow\\Tests\\FlowTestCase": "tests/phpunit/FlowTestCase.php",
+		"Flow\\Tests\\Formatter\\FormatterTest": "tests/phpunit/Formatter/FormatterTest.php",
+		"Flow\\Tests\\Formatter\\RevisionFormatterTest": "tests/phpunit/Formatter/RevisionFormatterTest.php",
+		"Flow\\Tests\\Handlebars\\FlowPostMetaActionsTest": "tests/phpunit/Handlebars/FlowPostMetaActionsTest.php",
+		"Flow\\Tests\\HookTest": "tests/phpunit/HookTest.php",
+		"Flow\\Tests\\Import\\ArchiveNameHelperTest": "tests/phpunit/Import/ArchiveNameHelperTest.php",
+		"Flow\\Tests\\Import\\ConverterTest": "tests/phpunit/Import/ConverterTest.php",
+		"Flow\\Tests\\Import\\HistoricalUIDGeneratorTest": "tests/phpunit/Import/HistoricalUIDGeneratorTest.php",
+		"Flow\\Tests\\Import\\LiquidThreadsApi\\ConversionStrategyTest": "tests/phpunit/Import/LiquidThreadsApi/ConversionStrategyTest.php",
+		"Flow\\Tests\\Import\\PageImportStateTest": "tests/phpunit/Import/PageImportStateTest.php",
+		"Flow\\Tests\\Import\\TalkpageImportOperationTest": "tests/phpunit/Import/TalkpageImportOperationTest.php",
+		"Flow\\Tests\\Import\\TemplateHelperTest": "tests/phpunit/Import/TemplateHelperTest.php",
+		"Flow\\Tests\\Import\\Wikitext\\ConversionStrategyTest": "tests/phpunit/Import/Wikitext/ConversionStrategyTest.php",
+		"Flow\\Tests\\Import\\Wikitext\\ImportSourceTest": "tests/phpunit/Import/Wikitext/ImportSourceTest.php",
+		"Flow\\Tests\\LinksTableTest": "tests/phpunit/LinksTableTest.php",
 		"Flow\\Tests\\Mock\\MockImportHeader": "tests/phpunit/Mock/MockImportHeader.php",
 		"Flow\\Tests\\Mock\\MockImportPost": "tests/phpunit/Mock/MockImportPost.php",
 		"Flow\\Tests\\Mock\\MockImportRevision": "tests/phpunit/Mock/MockImportRevision.php",
 		"Flow\\Tests\\Mock\\MockImportSource": "tests/phpunit/Mock/MockImportSource.php",
 		"Flow\\Tests\\Mock\\MockImportSummary": "tests/phpunit/Mock/MockImportSummary.php",
 		"Flow\\Tests\\Mock\\MockImportTopic": "tests/phpunit/Mock/MockImportTopic.php",
+		"Flow\\Tests\\Model\\PostRevisionTest": "tests/phpunit/Model/PostRevisionTest.php",
+		"Flow\\Tests\\Model\\UUIDTest": "tests/phpunit/Model/UUIDTest.php",
+		"Flow\\Tests\\Model\\UserTupleTest": "tests/phpunit/Model/UserTupleTest.php",
+		"Flow\\Tests\\NotificationControllerTest": "tests/phpunit/Notifications/NotificationControllerTest.php",
+		"Flow\\Tests\\NotifiedUsersTest": "tests/phpunit/Notifications/NotifiedUsersTest.php",
+		"Flow\\Tests\\Parsoid\\BadImageRemoverTest": "tests/phpunit/Parsoid/Fixer/BadImageRemoverTest.php",
+		"Flow\\Tests\\Parsoid\\BaseHrefFixerTest": "tests/phpunit/Parsoid/Fixer/BaseHrefFixerTest.php",
+		"Flow\\Tests\\Parsoid\\Fixer\\WikiLinkFixerTest": "tests/phpunit/Parsoid/Fixer/WikiLinkFixerTest.php",
+		"Flow\\Tests\\Parsoid\\ReferenceExtractorTestCase": "tests/phpunit/Parsoid/ReferenceExtractorTest.php",
+		"Flow\\Tests\\Parsoid\\ReferenceFactoryTest": "tests/phpunit/Parsoid/ReferenceFactoryTest.php",
+		"Flow\\Tests\\PermissionsTest": "tests/phpunit/PermissionsTest.php",
 		"Flow\\Tests\\PostRevisionTestCase": "tests/phpunit/PostRevisionTestCase.php",
+		"Flow\\Tests\\Repository\\TreeRepositoryTest": "tests/phpunit/Repository/TreeRepositoryTest.php",
+		"Flow\\Tests\\Repository\\TreeRepositoryDbTest": "tests/phpunit/Repository/TreeRepositoryDbTest.php",
+		"Flow\\Tests\\SpamFilter\\AbuseFilterTest": "tests/phpunit/SpamFilter/AbuseFilterTest.php",
+		"Flow\\Tests\\SpamFilter\\ConfirmEditTest": "tests/phpunit/SpamFilter/ConfirmEditTest.php",
+		"Flow\\Tests\\SpamFilter\\ContentLengthFilterTest": "tests/phpunit/SpamFilter/ContentLengthFilterTest.php",
+		"Flow\\Tests\\SpamFilter\\SpamBlacklistTest": "tests/phpunit/SpamFilter/SpamBlacklistTest.php",
+		"Flow\\Tests\\SpamFilter\\SpamRegexTest": "tests/phpunit/SpamFilter/SpamRegexTest.php",
+		"Flow\\Tests\\TalkpageManagerTest": "tests/phpunit/TalkpageManagerTest.php",
+		"Flow\\Tests\\TemplateHelperTest": "tests/phpunit/TemplateHelperTest.php",
+		"Flow\\Tests\\TemplatingTest": "tests/phpunit/TemplatingTest.php",
+		"Flow\\Tests\\UrlGeneratorTest": "tests/phpunit/UrlGeneratorTest.php",
+		"Flow\\Tests\\WatchedTopicItemTest": "tests/phpunit/WatchedTopicItemsTest.php",
 		"Flow\\TopicRenamedPresentationModel": "includes/Notifications/TopicRenamedPresentationModel.php",
 		"Flow\\TopicResolvedPresentationModel": "includes/Notifications/TopicResolvedPresentationModel.php",
 		"Flow\\UrlGenerator": "includes/UrlGenerator.php",

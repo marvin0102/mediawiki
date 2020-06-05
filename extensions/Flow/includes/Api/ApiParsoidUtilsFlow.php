@@ -13,12 +13,7 @@ class ApiParsoidUtilsFlow extends ApiBase {
 		$page = $this->getTitleOrPageId( $params );
 
 		try {
-			$content = Utils::convert(
-				$params['from'],
-				$params['to'],
-				$params['content'],
-				$page->getTitle()
-			);
+			$content = Utils::convert( $params['from'], $params['to'], $params['content'], $page->getTitle() );
 		} catch ( WikitextException $e ) {
 			$code = $e->getErrorCode();
 			$this->dieWithError( $code, $code,

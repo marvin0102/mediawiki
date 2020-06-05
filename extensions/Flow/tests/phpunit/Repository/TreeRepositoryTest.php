@@ -5,11 +5,9 @@ namespace Flow\Tests\Repository;
 use Flow\Model\UUID;
 use Flow\Repository\TreeRepository;
 use Flow\Tests\FlowTestCase;
-use Wikimedia\Rdbms\IDatabase;
+use Wikimedia\Rdbms\DatabaseMysqli;
 
 /**
- * @covers \Flow\Repository\TreeRepository
- *
  * @group Flow
  */
 class TreeRepositoryTest extends FlowTestCase {
@@ -29,24 +27,37 @@ class TreeRepositoryTest extends FlowTestCase {
 		$this->assertTrue( $treeRepository->insert( $this->descendant, $this->ancestor ) );
 	}
 
+	/**
+	 * @expectedException \Flow\Exception\DataModelException
+	 */
+	public function testFailingInsert() {
+		$treeRepository = new TreeRepository( $this->mockDbFactory( false ), $this->getCache() );
+		$treeRepository->insert( $this->descendant, $this->ancestor );
+	}
+
 	protected function mockDbFactory( $dbResult ) {
-		$dbFactory = $this->getMockBuilder( \Flow\DbFactory::class )
+		$dbFactory = $this->getMockBuilder( '\Flow\DbFactory' )
 			->disableOriginalConstructor()
 			->getMock();
 		$dbFactory->expects( $this->any() )
 			->method( 'getDB' )
-			->willReturn( $this->mockDb( $dbResult ) );
+			->will( $this->returnValue( $this->mockDb( $dbResult ) ) );
 		return $dbFactory;
 	}
 
 	protected function mockDb( $dbResult ) {
-		$db = $this->getMock( IDatabase::class );
-		$db->method( 'insert' )
-			->willReturn( $dbResult );
-		$db->method( 'insertSelect' )
-			->willReturn( $dbResult );
-		$db->method( 'addQuotes' )
-			->willReturn( '' );
+		$db = $this->getMockBuilder( DatabaseMysqli::class )
+			->disableOriginalConstructor()
+			->getMock();
+		$db->expects( $this->any() )
+			->method( 'insert' )
+			->will( $this->returnValue( $dbResult ) );
+		$db->expects( $this->any() )
+			->method( 'insertSelect' )
+			->will( $this->returnValue( $dbResult ) );
+		$db->expects( $this->any() )
+			->method( 'addQuotes' )
+			->will( $this->returnValue( '' ) );
 		return $db;
 	}
 

@@ -40,7 +40,7 @@ class WorkflowLoaderFactory {
 	 * @param BlockFactory $blockFactory
 	 * @param SubmissionHandler $submissionHandler
 	 */
-	public function __construct(
+	function __construct(
 		ManagerGroup $storage,
 		BlockFactory $blockFactory,
 		SubmissionHandler $submissionHandler
@@ -141,7 +141,7 @@ class WorkflowLoaderFactory {
 	 * @throws InvalidInputException When the Title does not represent a valid uuid
 	 */
 	public static function uuidFromTitle( Title $title ) {
-		return self::uuidFromTitlePair( $title->getNamespace(), $title->getDBkey() );
+		return self::uuidFromTitlePair( $title->getNamespace(), $title->getDbKey() );
 	}
 
 	/**
@@ -160,7 +160,7 @@ class WorkflowLoaderFactory {
 		try {
 			return UUID::create( strtolower( $dbKey ) );
 		} catch ( InvalidInputException $e ) {
-			throw new InvalidTopicUuidException( "$dbKey is not a valid UUID", 0 );
+			throw new InvalidTopicUuidException( "$dbKey is not a valid UUID", 0, $e );
 		}
 	}
 }

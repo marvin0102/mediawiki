@@ -14,7 +14,7 @@ require_once getenv( 'MW_INSTALL_PATH' ) !== false
  * @ingroup Maintenance
  */
 class CompileLightncandy extends Maintenance {
-	/** @var TemplateHelper */
+	/** @var  Flow\TemplateHelper */
 	protected $lightncandy;
 
 	public function __construct() {
@@ -64,5 +64,5 @@ class CompileLightncandy extends Maintenance {
 	}
 }
 
-$maintClass = CompileLightncandy::class; // Tells it to run the class
+$maintClass = 'CompileLightncandy'; // Tells it to run the class
 require_once RUN_MAINTENANCE_IF_MAIN;

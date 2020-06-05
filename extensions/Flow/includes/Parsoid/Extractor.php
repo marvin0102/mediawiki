@@ -14,7 +14,7 @@ interface Extractor {
 	 *
 	 * @return string
 	 */
-	public function getXPath();
+	function getXPath();
 
 	/**
 	 * Generate one or no references for a DOMElement found with self::getXPath
@@ -23,5 +23,5 @@ interface Extractor {
 	 * @param DOMElement $element
 	 * @return Reference|null
 	 */
-	public function perform( ReferenceFactory $factory, DOMElement $element );
+	function perform( ReferenceFactory $factory, DOMElement $element );
 }

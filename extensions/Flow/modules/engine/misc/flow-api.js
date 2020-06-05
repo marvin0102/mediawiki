@@ -1,4 +1,4 @@
-( function () {
+( function ( mw, $ ) {
 	var apiTransformMap = {
 		// Map of API submodule name, block name, and prefix name
 		'moderate-post': [ 'topic_', 'mp' ],
@@ -124,7 +124,7 @@
 			return queryMap;
 		}
 		for ( key in queryMap ) {
-			if ( Object.prototype.hasOwnProperty.call( queryMap, key ) ) {
+			if ( queryMap.hasOwnProperty( key ) ) {
 				if ( key.indexOf( map[ 0 ] ) === 0 ) {
 					queryMap[ key.replace( map[ 0 ], map[ 1 ] ) ] = queryMap[ key ];
 					delete queryMap[ key ];
@@ -347,4 +347,4 @@
 
 	// Export
 	mw.flow.FlowApi = FlowApi;
-}() );
+}( mw, jQuery ) );

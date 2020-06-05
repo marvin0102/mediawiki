@@ -1,4 +1,4 @@
-( function () {
+( function ( $ ) {
 	/**
 	 * Flow edit post widget
 	 *
@@ -12,28 +12,17 @@
 	 * @cfg {Object} [editor] Config options to pass to mw.flow.ui.EditorWidget
 	 */
 	mw.flow.ui.EditPostWidget = function mwFlowUiEditPostWidget( topicId, postId, config ) {
-		var msgKey;
-
 		config = config || {};
 
 		this.topicId = topicId;
 		this.postId = postId;
 
 		// Parent constructor
-		mw.flow.ui.EditPostWidget.super.call( this, config );
-
-		if ( mw.config.get( 'wgEditSubmitButtonLabelPublish' ) ) {
-			msgKey = mw.user.isAnon() ? 'flow-post-action-edit-post-submit-anonymously-publish' : 'flow-post-action-edit-post-submit-publish';
-		} else {
-			msgKey = mw.user.isAnon() ?
-				'flow-post-action-edit-post-submit-anonymously' :
-				'flow-post-action-edit-post-submit';
-		}
+		mw.flow.ui.EditPostWidget.parent.call( this, config );
 
 		this.editor = new mw.flow.ui.EditorWidget( $.extend( {
-			saveMsgKey: msgKey,
-			classes: [ 'flow-ui-editPostWidget-editor' ],
-			id: 'edit/' + postId
+			saveMsgKey: mw.user.isAnon() ? 'flow-post-action-edit-post-submit-anonymously' : 'flow-post-action-edit-post-submit',
+			classes: [ 'flow-ui-editPostWidget-editor' ]
 		}, config.editor ) );
 		this.editor.toggle( true );
 
@@ -180,11 +169,9 @@
 
 	/**
 	 * Destroy the widget
-	 *
-	 * @return {jQuery.Promise} Promise which resolves when the widget is destroyed
 	 */
 	mw.flow.ui.EditPostWidget.prototype.destroy = function () {
-		return this.editor.destroy();
+		this.editor.destroy();
 	};
 
-}() );
+}( jQuery ) );

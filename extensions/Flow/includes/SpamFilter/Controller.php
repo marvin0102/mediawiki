@@ -39,15 +39,8 @@ class Controller {
 	 *   replies and board for header edits.
 	 * @param Title $ownerTitle Board title
 	 * @return Status
-	 * @suppress PhanParamReqAfterOpt Nullable, not optional
 	 */
-	public function validate(
-		IContextSource $context,
-		AbstractRevision $newRevision,
-		AbstractRevision $oldRevision = null,
-		Title $title,
-		Title $ownerTitle
-	) {
+	public function validate( IContextSource $context, AbstractRevision $newRevision, AbstractRevision $oldRevision = null, Title $title, Title $ownerTitle ) {
 		foreach ( $this->spamfilters as $spamfilter ) {
 			if ( !$spamfilter->enabled() ) {
 				continue;
@@ -58,12 +51,10 @@ class Controller {
 			// no need to go through other filters when invalid data is discovered
 			if ( !$status->isOK() ) {
 				$titleString = $title->getPrefixedDBkey();
-				$oldRevid = ( $oldRevision !== null )
-					? $oldRevision->getRevisionId()->getAlphadecimal() : 'None';
+				$oldRevid = ( $oldRevision !== null ) ? $oldRevision->getRevisionId()->getAlphadecimal() : 'None';
 				$newRevid = $newRevision->getRevisionId()->getAlphadecimal();
 				$klass = get_class( $spamfilter );
-				wfDebugLog( 'Flow', __METHOD__ . ": Spam filter failed on '" . $titleString . "'.
-					Old revid: $oldRevid.  New revid: $newRevid.  Filter: $klass" );
+				wfDebugLog( 'Flow', __METHOD__ . ": Spam filter failed on '" . $titleString . "'.  Old revid: $oldRevid.  New revid: $newRevid.  Filter: $klass" );
 				return $status;
 			}
 		}

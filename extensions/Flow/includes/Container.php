@@ -3,7 +3,7 @@
 namespace Flow;
 
 class Container extends \Pimple\Container {
-	private static $container;
+	static private $container;
 
 	/**
 	 * Get a Flow Container

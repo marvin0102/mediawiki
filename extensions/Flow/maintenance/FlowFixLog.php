@@ -24,7 +24,7 @@ class FlowFixLog extends LoggedUpdateMaintenance {
 	public function __construct() {
 		parent::__construct();
 
-		$this->addDescription( 'Fixes Flow log entries' );
+		$this->mDescription = 'Fixes Flow log entries';
 
 		$this->setBatchSize( 300 );
 
@@ -63,7 +63,7 @@ class FlowFixLog extends LoggedUpdateMaintenance {
 	 * a Closure.
 	 *
 	 * @param string $out
-	 * @param mixed|null $channel
+	 * @param mixed $channel
 	 */
 	public function output( $out, $channel = null ) {
 		parent::output( $out, $channel );
@@ -96,11 +96,10 @@ class LogRowUpdateGenerator implements RowUpdateGenerator {
 
 	public function update( $row ) {
 		$updates = [];
-		$logId = (int)$row->log_id;
 
 		$params = unserialize( $row->log_params );
 		if ( !$params ) {
-			$this->maintenance->error( "Failed to unserialize log_params for log_id $logId" );
+			$this->maintenance->error( "Failed to unserialize log_params for log_id {$row->log_id}" );
 			return [];
 		}
 
@@ -115,7 +114,7 @@ class LogRowUpdateGenerator implements RowUpdateGenerator {
 		}
 
 		if ( !$topic ) {
-			$this->maintenance->error( "Missing topicId & postId for log_id $logId" );
+			$this->maintenance->error( "Missing topicId & postId for log_id {$row->log_id}" );
 			return [];
 		}
 
@@ -124,7 +123,7 @@ class LogRowUpdateGenerator implements RowUpdateGenerator {
 			$updates['log_namespace'] = $topic->getTitle()->getNamespace();
 			$updates['log_title'] = $topic->getTitle()->getDBkey();
 		} catch ( \Exception $e ) {
-			$this->maintenance->error( "Couldn't load Title for log_id $logId" );
+			$this->maintenance->error( "Couldn't load Title for log_id {$row->log_id}" );
 			$updates = [];
 		}
 
@@ -163,7 +162,7 @@ class LogRowUpdateGenerator implements RowUpdateGenerator {
 
 	/**
 	 * @param UUID $postId
-	 * @return PostCollection|false
+	 * @return PostCollection
 	 */
 	protected function loadPost( UUID $postId ) {
 		try {
@@ -197,5 +196,5 @@ class LogRowUpdateGenerator implements RowUpdateGenerator {
 	}
 }
 
-$maintClass = FlowFixLog::class;
+$maintClass = 'FlowFixLog';
 require_once RUN_MAINTENANCE_IF_MAIN;

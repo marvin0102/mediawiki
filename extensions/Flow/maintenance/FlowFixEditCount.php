@@ -25,7 +25,7 @@ class FlowFixEditCount extends LoggedUpdateMaintenance {
 	public function __construct() {
 		parent::__construct();
 
-		$this->addDescription( 'Adjusts edit counts for all existing Flow data' );
+		$this->mDescription = 'Adjusts edit counts for all existing Flow data';
 
 		$this->addOption( 'start', 'Timestamp to start counting revisions at', false, true );
 		$this->addOption( 'stop', 'Timestamp to stop counting revisions at', false, true );
@@ -63,7 +63,7 @@ class FlowFixEditCount extends LoggedUpdateMaintenance {
 		return true;
 	}
 
-	public function refreshBatch( IDatabase $dbr, UUID $continue, array $countableActions, UUID $stop ) {
+	public function refreshBatch( IDatabase $dbr, UUID $continue, $countableActions, UUID $stop ) {
 		$rows = $dbr->select(
 			'flow_revision',
 			[ 'rev_id', 'rev_user_id' ],
@@ -111,13 +111,13 @@ class FlowFixEditCount extends LoggedUpdateMaintenance {
 	/**
 	 * Returns list of rev_change_type values that warrant an editcount increase.
 	 *
-	 * @return string[]
+	 * @return array
 	 */
 	protected function getCountableActions() {
 		$allowedActions = [];
 
 		/** @var FlowActions $actions */
-		$actions = Container::get( 'flow_actions' );
+		$actions = \Flow\Container::get( 'flow_actions' );
 		foreach ( $actions->getActions() as $action ) {
 			if ( $actions->getValue( $action, 'editcount' ) ) {
 				$allowedActions[] = $action;
@@ -128,5 +128,5 @@ class FlowFixEditCount extends LoggedUpdateMaintenance {
 	}
 }
 
-$maintClass = FlowFixEditCount::class;
+$maintClass = 'FlowFixEditCount';
 require_once RUN_MAINTENANCE_IF_MAIN;

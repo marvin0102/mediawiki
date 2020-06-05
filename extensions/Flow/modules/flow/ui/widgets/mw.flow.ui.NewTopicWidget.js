@@ -1,4 +1,4 @@
-( function () {
+( function ( $ ) {
 	/**
 	 * Flow new topic widget
 	 *
@@ -18,7 +18,7 @@
 		config = config || {};
 
 		// Parent constructor
-		mw.flow.ui.NewTopicWidget.super.call( this, config );
+		mw.flow.ui.NewTopicWidget.parent.call( this, config );
 
 		this.isProbablyEditable = mw.config.get( 'wgIsProbablyEditable' );
 
@@ -45,12 +45,9 @@
 		} );
 		this.canNotEdit.toggle( false );
 
-		this.id = 'new-topic/' + mw.flow.system.boardId;
-
 		this.title = new OO.ui.TextInputWidget( {
 			placeholder: mw.msg( 'flow-newtopic-start-placeholder' ),
-			classes: [ 'flow-ui-newTopicWidget-title' ],
-			value: mw.storage.session.get( this.id + '/title' )
+			classes: [ 'flow-ui-newTopicWidget-title' ]
 		} );
 
 		this.editor = new mw.flow.ui.EditorWidget( $.extend( {
@@ -63,8 +60,7 @@
 				if ( widget.title.getValue() !== '' ) {
 					return false;
 				}
-			},
-			id: this.id
+			}
 		}, config.editor ) );
 		this.editor.toggle( false );
 
@@ -94,10 +90,8 @@
 		this.title.connect( this, {
 			change: 'updateFormState'
 		} );
-		this.title.$element.on( {
-			focusin: this.onTitleFocusIn.bind( this ),
-			keydown: this.onTitleKeydown.bind( this )
-		} );
+		this.title.$element.on( 'focusin', this.onTitleFocusIn.bind( this ) );
+		this.title.$element.on( 'keydown', this.onTitleKeydown.bind( this ) );
 
 		// Initialization
 		this.updateFormState();
@@ -131,8 +125,6 @@
 
 		this.title.setDisabled( isDisabled );
 		this.editor.setDisabled( isDisabled );
-
-		mw.storage.session.set( this.id + '/title', this.title.getValue() );
 
 		this.editor.editorControlsWidget.toggleSaveable(
 			this.isProbablyEditable &&
@@ -191,8 +183,7 @@
 	 */
 	mw.flow.ui.NewTopicWidget.prototype.onTitleKeydown = function ( e ) {
 		if ( e.which === OO.ui.Keys.ESCAPE ) {
-			// Trigger editor cancel, potentially prompting about discarding changes
-			this.editor.onEditorControlsWidgetCancel();
+			this.onEditorCancel();
 			e.preventDefault();
 			e.stopPropagation();
 		}
@@ -286,4 +277,4 @@
 			this.title.setValue( '' );
 		}
 	};
-}() );
+}( jQuery ) );

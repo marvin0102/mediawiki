@@ -2,19 +2,17 @@
 
 namespace Flow\Import;
 
-use Iterator;
-
 interface IImportSource {
 	/**
 	 * @return Iterator<IImportTopic>
 	 */
-	public function getTopics();
+	function getTopics();
 
 	/**
 	 * @return IImportHeader
 	 * @throws ImportException
 	 */
-	public function getHeader();
+	function getHeader();
 }
 
 interface IImportObject {
@@ -24,57 +22,57 @@ interface IImportObject {
 	 *
 	 * @return string
 	 */
-	public function getObjectKey();
+	function getObjectKey();
 }
 
 interface IRevisionableObject extends IImportObject {
 	/**
 	 * @return Iterator<IObjectRevision>
 	 */
-	public function getRevisions();
+	function getRevisions();
 }
 
 interface IObjectRevision extends IImportObject {
 	/**
 	 * @return string Wikitext
 	 */
-	public function getText();
+	function getText();
 
 	/**
 	 * @return string Timestamp compatible with wfTimestamp()
 	 */
-	public function getTimestamp();
+	function getTimestamp();
 
 	/**
 	 * @return string The name of the user who created this revision.
 	 */
-	public function getAuthor();
+	function getAuthor();
 }
 
 interface IImportPost extends IRevisionableObject {
 	/**
 	 * @return Iterator<IImportPost>
 	 */
-	public function getReplies();
+	function getReplies();
 }
 
 interface IImportTopic extends IImportPost {
 	/**
 	 * @return IImportSummary|null The summary, if any, for a topic
 	 */
-	public function getTopicSummary();
+	function getTopicSummary();
 
 	/**
 	 * @return string The subtype to use when logging topic imports
 	 *  to Special:Log.  It will appear in the log as "import/$logType"
 	 */
-	public function getLogType();
+	function getLogType();
 
 	/**
-	 * @return string[] A k/v map of strings containing additional
+	 * @return string[string] A k/v map of strings containing additional
 	 *  parameters to be stored with the log about importing this topic.
 	 */
-	public function getLogParameters();
+	function getLogParameters();
 }
 
 interface IImportHeader extends IRevisionableObject {

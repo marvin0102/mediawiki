@@ -34,6 +34,8 @@ abstract class FlowPresentationModel extends EchoEventPresentationModel {
 	 * @return string
 	 */
 	protected function getPostLinkUrl( $firstChronologicallyPostId = null, $anchorPostId = null ) {
+		/** @var UUID $workflowId */
+		$workflowId = $this->event->getExtraParam( 'topic-workflow' );
 		if ( $firstChronologicallyPostId === null ) {
 			/** @var UUID $firstChronologicallyPostId */
 			$firstChronologicallyPostId = $this->event->getExtraParam( 'post-id' );
@@ -63,7 +65,12 @@ abstract class FlowPresentationModel extends EchoEventPresentationModel {
 	 * @return string
 	 */
 	protected function getTopicLinkUrl() {
-		return $this->getTopicTitleObj()->getFullURL( [ 'fromnotif' => 1 ] );
+		/** @var UUID $workflowId */
+		$workflowId = $this->event->getExtraParam( 'topic-workflow' );
+
+		$url = $this->getTopicTitleObj()->getFullURL( [ 'fromnotif' => 1 ] );
+
+		return $url;
 	}
 
 	/**
@@ -85,7 +92,7 @@ abstract class FlowPresentationModel extends EchoEventPresentationModel {
 	/**
 	 * Return a full url to a board sorted by newest topic
 	 *   ?topiclist_sortby=newest
-	 * @return array
+	 * @return string
 	 */
 	protected function getBoardLinkByNewestTopic() {
 		return [
@@ -97,7 +104,8 @@ abstract class FlowPresentationModel extends EchoEventPresentationModel {
 	protected function getBoardByNewestTopicUrl() {
 		/** @var UrlGenerator $urlGenerator */
 		$urlGenerator = Container::get( 'url_generator' );
-		return $urlGenerator->boardLink( $this->event->getTitle(), 'newest' )->getFullURL();
+		$url = $urlGenerator->boardLink( $this->event->getTitle(), 'newest' )->getFullURL();
+		return $url;
 	}
 
 	protected function getViewTopicLink() {
@@ -130,7 +138,7 @@ abstract class FlowPresentationModel extends EchoEventPresentationModel {
 
 	protected function truncateTopicTitle( $topicTitle ) {
 		return $this->language->embedBidi(
-			$this->language->truncateForVisual(
+			$this->language->truncate(
 				$topicTitle,
 				self::SECTION_TITLE_RECOMMENDED_LENGTH,
 				'...',

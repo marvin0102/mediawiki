@@ -2,7 +2,6 @@
 
 namespace Flow\Import\LiquidThreadsApi;
 
-use Iterator;
 use ArrayIterator;
 
 /**
@@ -37,7 +36,7 @@ abstract class CachedData {
 	/**
 	 * Get the value for a number of IDs
 	 *
-	 * @param int[] $ids List of IDs to retrieve
+	 * @param array $ids List of IDs to retrieve
 	 * @return array Associative array, indexed by ID.
 	 */
 	public function getMulti( array $ids ) {
@@ -45,7 +44,7 @@ abstract class CachedData {
 
 		$output = [];
 		foreach ( $ids as $id ) {
-			$output[$id] = $this->data[$id] ?? null;
+			$output[$id] = isset( $this->data[$id] ) ? $this->data[$id] : null;
 		}
 
 		return $output;
@@ -63,7 +62,7 @@ abstract class CachedData {
 	/**
 	 * Uncached retrieval of data from the backend.
 	 *
-	 * @param int[] $ids The IDs to retrieve data for
+	 * @param array $ids The IDs to retrieve data for
 	 * @return array Associative array of data retrieved, indexed by ID.
 	 */
 	abstract protected function retrieve( array $ids );
@@ -80,7 +79,7 @@ abstract class CachedData {
 	/**
 	 * Load missing IDs from a list
 	 *
-	 * @param int[] $ids The IDs to retrieve
+	 * @param array $ids The IDs to retrieve
 	 */
 	protected function ensureLoaded( array $ids ) {
 		$missing = array_diff( $ids, array_keys( $this->data ) );
@@ -95,7 +94,7 @@ abstract class CachedData {
 abstract class CachedApiData extends CachedData {
 	protected $backend;
 
-	public function __construct( ApiBackend $backend ) {
+	function __construct( ApiBackend $backend ) {
 		$this->backend = $backend;
 	}
 }

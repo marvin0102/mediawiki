@@ -2,7 +2,7 @@
  * Contains Side Rail functionality.
  */
 
-( function () {
+( function ( $, mw ) {
 	/**
 	 * Binds handlers for side rail in board header.
 	 * @param {jQuery} $container
@@ -35,7 +35,6 @@
 	 */
 	function FlowBoardComponentSideRailFeatureMixinLoadCallback() {
 		if ( mw.user.options.get( 'flow-side-rail-state' ) === 'collapsed' ) {
-			// eslint-disable-next-line no-jquery/no-global-selector
 			$( '.flow-component' ).addClass( 'expanded' );
 		}
 	}
@@ -51,7 +50,6 @@
 	 * @param {Event} event
 	 */
 	function FlowBoardComponentSideRailFeatureMixinToggleCallback() {
-		// eslint-disable-next-line no-jquery/no-global-selector
 		var boardIsExpanded = $( '.flow-component' ).toggleClass( 'expanded' ).hasClass( 'expanded' ),
 			sideRailState = boardIsExpanded ? 'collapsed' : 'expanded';
 
@@ -66,4 +64,4 @@
 
 	// Mixin to FlowComponent
 	mw.flow.mixinComponent( 'component', FlowBoardComponentSideRailFeatureMixin );
-}() );
+}( jQuery, mediaWiki ) );

@@ -41,9 +41,7 @@ class BadImageRemover implements Fixer {
 	 * @return string
 	 */
 	public function getXPath() {
-		return '//figure[starts-with(@typeof,"mw:Image")]//img[@resource] | ' .
-			'//figure-inline[starts-with(@typeof,"mw:Image")]//img[@resource] | ' .
-			'//span[starts-with(@typeof,"mw:Image")]//img[@resource]';
+		return '//figure[starts-with(@typeof,"mw:Image")]//img[@resource] | //figure-inline[starts-with(@typeof,"mw:Image")]//img[@resource] | //span[starts-with(@typeof,"mw:Image")]//img[@resource]';
 	}
 
 	/**
@@ -64,22 +62,19 @@ class BadImageRemover implements Fixer {
 			return;
 		}
 
-		$image = Utils::createRelativeTitle( rawurldecode( $resource ), $title );
+		$image = Utils::createRelativeTitle( $resource, $title );
 		if ( !$image ) {
-			wfDebugLog( 'Flow', __METHOD__ . ': Could not construct title for node: ' .
-				$node->ownerDocument->saveXML( $node ) );
+			wfDebugLog( 'Flow', __METHOD__ . ': Could not construct title for node: ' . $node->ownerDocument->saveXML( $node ) );
 			return;
 		}
 
-		if ( !( $this->isFiltered )( $image->getDBkey(), $title ) ) {
+		if ( !call_user_func( $this->isFiltered, $image->getDBkey(), $title ) ) {
 			return;
 		}
 
 		// Move up the DOM and remove the typeof="mw:Image" node
 		$nodeToRemove = $node->parentNode;
-		while ( $nodeToRemove instanceof DOMElement &&
-			strpos( $nodeToRemove->getAttribute( 'typeof' ), 'mw:Image' ) !== 0
-		) {
+		while ( $nodeToRemove instanceof DOMElement && strpos( $nodeToRemove->getAttribute( 'typeof' ), 'mw:Image' ) !== 0 ) {
 			$nodeToRemove = $nodeToRemove->parentNode;
 		}
 		if ( !$nodeToRemove ) {

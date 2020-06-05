@@ -2,7 +2,7 @@
  * Contains base FlowComponent class.
  */
 
-( function () {
+( function ( $, mw ) {
 	var _totalInstanceCount = 0;
 
 	/**
@@ -14,7 +14,7 @@
 	 * @constructor
 	 */
 	function FlowComponent( $container ) {
-		var parent = this.constructor.super;
+		var parent = this.constructor.parent;
 
 		// Run progressive enhancements if any are needed by this container
 		mw.flow.TemplateEngine.processProgressiveEnhancement( $container );
@@ -40,7 +40,7 @@
 		// Keep this in the registry to find it by other means
 		while ( parent ) {
 			parent._instanceRegistryById[ this.id ] = parent._instanceRegistry.push( this ) - 1;
-			parent = parent.super; // and add it to every instance registry
+			parent = parent.parent; // and add it to every instance registry
 		}
 		_totalInstanceCount++;
 	}
@@ -122,7 +122,7 @@
 	 */
 	FlowComponent.prototype.getInstances = function () {
 		// Use the correct context (instance vs prototype)
-		return ( this.constructor.super || this )._instanceRegistry;
+		return ( this.constructor.parent || this )._instanceRegistry;
 	};
 
 	/**
@@ -132,7 +132,7 @@
 	 */
 	FlowComponent.prototype.getInstanceByElement = function ( $el ) {
 		var $container = $el.closest( '.flow-component' ),
-			context = this.constructor.super || this, // Use the correct context (instance vs prototype)
+			context = this.constructor.parent || this, // Use the correct context (instance vs prototype)
 			id;
 
 		// This element isn't _within_ any actual component; was it spawned _by_ a component?
@@ -221,10 +221,10 @@
 			handlerQueue = [];
 
 		// Make a writable jQuery.Event from the native event object
-		event = $.event.fix( event );
+		event = jQuery.event.fix( event );
 		args = Array.prototype.slice.call( arguments, 0 );
-		handlers = ( $._data( this, 'events' ) || {} )[ event.type ] || [];
-		special = $.event.special[ event.type ] || {};
+		handlers = ( jQuery._data( this, 'events' ) || {} )[ event.type ] || [];
+		special = jQuery.event.special[ event.type ] || {};
 
 		// Use the fix-ed jQuery.Event rather than the (read-only) native event
 		args[ 0 ] = event;
@@ -237,7 +237,7 @@
 
 		// Determine handlers
 		// The important modification: we use container instead of this as the context
-		handlerQueue = $.event.handlers.call( container, event, handlers );
+		handlerQueue = jQuery.event.handlers.call( container, event, handlers );
 
 		// Run delegates first; they may want to stop propagation beneath us
 		i = 0;
@@ -253,7 +253,7 @@
 					event.handleObj = handleObj;
 					event.data = handleObj.data;
 
-					ret = ( ( $.event.special[ handleObj.origType ] || {} ).handle || handleObj.handler )
+					ret = ( ( jQuery.event.special[ handleObj.origType ] || {} ).handle || handleObj.handler )
 						.apply( matched.elem, args );
 
 					if ( ret !== undefined ) {
@@ -275,4 +275,4 @@
 	}
 
 	mw.flow.registerComponent( 'component', FlowComponent );
-}() );
+}( jQuery, mediaWiki ) );

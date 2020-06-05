@@ -2,7 +2,7 @@
  * Contains flow-menu functionality.
  */
 
-( function () {
+( function ( $, mw ) {
 	/**
 	 * Binds handlers for flow-menu.
 	 * @param {jQuery} $container
@@ -53,13 +53,13 @@
 
 				// This trick lets us wait for a blur event from A instead on body, to later hide the menu on outside click
 				if ( $menu.hasClass( 'focus' ) ) {
-					$menu.find( '.flow-menu-js-drop' ).find( 'a' ).trigger( 'focus' );
+					$menu.find( '.flow-menu-js-drop' ).find( 'a' ).focus();
 				}
 			} else if ( $this.is( 'a, button' ) ) {
 				// Remove the focus from the menu so it can hide after clicking on a link or button
 				setTimeout( function () {
 					if ( $this.is( ':focus' ) ) {
-						$this.trigger( 'blur' );
+						$this.blur();
 					}
 				}, 50 );
 			}
@@ -128,7 +128,7 @@
 		// This happens when you clone an activated flow-menu
 		if ( $menu.hasClass( 'focus' ) && !$menu.find( 'a' ).filter( ':focus' ).length ) {
 			// Give it focus again
-			$menu.find( '.flow-menu-js-drop' ).find( 'a' ).trigger( 'focus' );
+			$menu.find( '.flow-menu-js-drop' ).find( 'a' ).focus();
 		}
 	}
 	FlowComponentMenusFeatureMixin.UI.events.loadHandlers.menu = flowComponentMenusFeatureElementLoadCallback;
@@ -139,4 +139,4 @@
 
 	// Mixin to FlowComponent
 	mw.flow.mixinComponent( 'component', FlowComponentMenusFeatureMixin );
-}() );
+}( jQuery, mediaWiki ) );

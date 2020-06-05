@@ -46,46 +46,28 @@ class NotificationController {
 			'tooltip' => 'echo-pref-tooltip-flow-discussion',
 		];
 		$icons['flow-new-topic'] = [
-			'path' => [
-				'ltr' => 'Flow/modules/notification/icon/flow-new-topic-ltr.svg',
-				'rtl' => 'Flow/modules/notification/icon/flow-new-topic-rtl.svg'
-			]
+			'path' => 'Flow/modules/notification/icon/flow-new-topic.svg',
 		];
 		$icons['flowusertalk-new-topic'] = [
-			'path' => [
-				'ltr' => 'Flow/modules/notification/icon/flow-new-topic-ltr.svg',
-				'rtl' => 'Flow/modules/notification/icon/flow-new-topic-rtl.svg'
-			]
+			'path' => 'Flow/modules/notification/icon/flowusertalk-new-topic.svg',
 		];
 		$icons['flow-post-edited'] = $icons['flowusertalk-post-edited'] = [
-			'path' => [
-				'ltr' => 'Flow/modules/notification/icon/flow-post-edited-ltr.svg',
-				'rtl' => 'Flow/modules/notification/icon/flow-post-edited-rtl.svg'
-			]
+			'path' => 'Flow/modules/notification/icon/flow-post-edited.svg',
 		];
 		$icons['flow-topic-renamed'] = $icons['flowusertalk-topic-renamed'] = [
-			'path' => [
-				'ltr' => 'Flow/modules/notification/icon/flow-topic-renamed-ltr.svg',
-				'rtl' => 'Flow/modules/notification/icon/flow-topic-renamed-rtl.svg'
-			]
+			'path' => 'Flow/modules/notification/icon/flow-topic-renamed.svg',
 		];
 		$icons['flow-topic-resolved'] = $icons['flowusertalk-topic-resolved'] = [
-			'path' => [
-				'ltr' => 'Flow/modules/notification/icon/flow-topic-resolved-ltr.svg',
-				'rtl' => 'Flow/modules/notification/icon/flow-topic-resolved-rtl.svg'
-			]
+			'path' => 'Flow/modules/notification/icon/flow-topic-resolved.svg',
 		];
 		$icons['flow-topic-reopened'] = $icons['flowusertalk-topic-reopened'] = [
-			'path' => [
-				'ltr' => 'Flow/modules/notification/icon/flow-topic-reopened-ltr.svg',
-				'rtl' => 'Flow/modules/notification/icon/flow-topic-reopened-rtl.svg'
-			]
+			'path' => 'Flow/modules/notification/icon/flow-topic-reopened.svg',
 		];
 	}
 
 	/**
 	 * Causes notifications to be fired for a Header-related event.
-	 * @param array $data Associative array of parameters.
+	 * @param array $data Associative array of parameters. * revision: The PostRevision created by the action. Always required. * board-workflow: The Workflow object for the board. Always required. * timestamp: Original event timestamp, for imports. Optional. * extra-data: Additional data to pass along to Event extra.
 	 * * revision: The PostRevision created by the action. Always required.
 	 * * board-workflow: The Workflow object for the board. Always required.
 	 * * timestamp: Original event timestamp, for imports. Optional.
@@ -160,7 +142,7 @@ class NotificationController {
 	 * * flow-post-reply
 	 * * flow-topic-renamed
 	 * * flow-post-edited
-	 * @param array $data Associative array of parameters.
+	 * @param array $data Associative array of parameters. * user: The user who made the change. Always required. * revision: The PostRevision created by the action. Always required. * title: The Title on which this Topic sits. Always required. * topic-workflow: The Workflow object for the topic. Always required. * topic-title: The Title of the Topic that the post belongs to. Required except for topic renames. * old-subject: The old subject of a Topic. Required for topic renames. * new-subject: The new subject of a Topic. Required for topic renames.
 	 * * user: The user who made the change. Always required.
 	 * * revision: The PostRevision created by the action. Always required.
 	 * * title: The Title on which this Topic sits. Always required.
@@ -211,7 +193,7 @@ class NotificationController {
 				$extraData += [
 					'reply-to' => $revision->getReplyToId(),
 					'content' => Utils::htmlToPlaintext( $revision->getContent(), 200, $this->language ),
-					'topic-title' => $this->language->truncateForVisual( $topicRevision->getContent( 'topic-title-plaintext' ), 200 ),
+					'topic-title' => $this->language->truncate( $topicRevision->getContent( 'topic-title-plaintext' ), 200 ),
 				];
 
 				// if we're looking at the initial post (submitted along with the topic
@@ -243,14 +225,14 @@ class NotificationController {
 			case 'flow-topic-renamed':
 				$previousRevision = $revision->getCollection()->getPrevRevision( $revision );
 				$extraData += [
-					'old-subject' => $this->language->truncateForVisual( $previousRevision->getContent( 'topic-title-plaintext' ), 200 ),
-					'new-subject' => $this->language->truncateForVisual( $revision->getContent( 'topic-title-plaintext' ), 200 ),
+					'old-subject' => $this->language->truncate( $previousRevision->getContent( 'topic-title-plaintext' ), 200 ),
+					'new-subject' => $this->language->truncate( $revision->getContent( 'topic-title-plaintext' ), 200 ),
 				];
 			break;
 			case 'flow-post-edited':
 				$extraData += [
 					'content' => Utils::htmlToPlaintext( $revision->getContent(), 200, $this->language ),
-					'topic-title' => $this->language->truncateForVisual( $topicRevision->getContent( 'topic-title-plaintext' ), 200 ),
+					'topic-title' => $this->language->truncate( $topicRevision->getContent( 'topic-title-plaintext' ), 200 ),
 				];
 			break;
 		}
@@ -288,7 +270,7 @@ class NotificationController {
 
 	/**
 	 * Causes notifications to be fired for a Summary-related event.
-	 * @param array $data Associative array of parameters.
+	 * @param array $data Associative array of parameters. * revision: The PostRevision created by the action. Always required. * topic-title: The PostRevision object for the topic title. Always required. * topic-workflow: The Workflow object for the board. Always required. * extra-data: Additional data to pass along to Event extra.
 	 * * revision: The PostRevision created by the action. Always required.
 	 * * topic-title: The PostRevision object for the topic title. Always required.
 	 * * topic-workflow: The Workflow object for the board. Always required.
@@ -317,12 +299,11 @@ class NotificationController {
 		$user = $revision->getUser();
 		list( $mentionedUsers, $mentionsSkipped ) = $this->getMentionedUsersAndSkipState( $revision );
 
-		$extraData = [];
 		$extraData['content'] = Utils::htmlToPlaintext( $revision->getContent(), 200, $this->language );
 		$extraData['revision-id'] = $revision->getRevisionId();
 		$extraData['prev-revision-id'] = $revision->getPrevRevisionId();
 		$extraData['topic-workflow'] = $topicWorkflow->getId();
-		$extraData['topic-title'] = $this->language->truncateForVisual( $topicRevision->getContent( 'topic-title-plaintext' ), 200 );
+		$extraData['topic-title'] = $this->language->truncate( $topicRevision->getContent( 'topic-title-plaintext' ), 200 );
 		$extraData['target-page'] = $topicWorkflow->getArticleTitle()->getArticleID();
 		// pass along mentioned users to other notification, so it knows who to ignore
 		$extraData['mentioned-users'] = $mentionedUsers;
@@ -405,7 +386,7 @@ class NotificationController {
 				'board-workflow' => $boardWorkflow->getId(),
 				'topic-workflow' => $topicWorkflow->getId(),
 				'post-id' => $firstPost ? $firstPost->getRevisionId() : null,
-				'topic-title' => $this->language->truncateForVisual( $topicTitle->getContent( 'topic-title-plaintext' ), 200 ),
+				'topic-title' => $this->language->truncate( $topicTitle->getContent( 'topic-title-plaintext' ), 200 ),
 				'content' => $firstPost
 					? Utils::htmlToPlaintext( $firstPost->getContent(), 200, $this->language )
 					: null,
@@ -465,7 +446,6 @@ class NotificationController {
 			throw new FlowException( 'Expected Workflow but received ' . get_class( $topicWorkflow ) );
 		}
 
-		$extraData = [];
 		$extraData['topic-workflow'] = $topicWorkflow->getId();
 		$extraData['topic-title'] = Utils::htmlToPlaintext( $revision->getContent( 'topic-title-html' ), 200, $this->language );
 		$extraData['target-page'] = $topicWorkflow->getArticleTitle()->getArticleID();
@@ -503,6 +483,9 @@ class NotificationController {
 			'type' => 'flow-enabled-on-talkpage',
 			'agent' => $user,
 			'title' => $user->getTalkPage(),
+			'extra' => [
+				'notifyAgent' => true,
+			],
 		] );
 
 		return $events;
@@ -518,7 +501,6 @@ class NotificationController {
 	 * @return bool|EchoEvent[]
 	 * @throws Exception\InvalidDataException
 	 * @throws \MWException
-	 * @suppress PhanParamReqAfterOpt Nullable, not optional
 	 */
 	protected function generateMentionEvents(
 		AbstractRevision $content,
@@ -549,7 +531,7 @@ class NotificationController {
 		// needed to render topic title text & link to topic
 		if ( $topic !== null ) {
 			$extraData['topic-workflow'] = $workflow->getId();
-			$extraData['topic-title'] = $this->language->truncateForVisual( $topic->getContent( 'topic-title-plaintext' ), 200 );
+			$extraData['topic-title'] = $this->language->truncate( $topic->getContent( 'topic-title-plaintext' ), 200 );
 		}
 
 		$events = [];
@@ -565,6 +547,7 @@ class NotificationController {
 				'max-mentions' => $wgFlowMaxMentionCount,
 				'section-title' => $extraData['topic-title'],
 				'failure-type' => 'too-many',
+				'notifyAgent' => true
 			];
 			if ( $content->getRevisionType() === 'post' ) {
 				$extra['post-id'] = $content->getCollection()->getId();
@@ -782,7 +765,7 @@ class NotificationController {
 	 * This is the lowest-number post, numbering them using a pre-order depth-first
 	 *  search
 	 *
-	 * @param EchoEvent[] $bundledEvents
+	 * @param array $bundledEvents Array of EchoEvents
 	 * @return UUID|null Post ID, or null on failure
 	 */
 	public function getTopmostPostId( array $bundledEvents ) {
@@ -843,7 +826,7 @@ class NotificationController {
 	 *
 	 * This is the root of the smallest subtree all the posts are in.
 	 *
-	 * @param array[] $rootPaths Associative array mapping post IDs to root paths
+	 * @param array $rootPaths Associative array mapping post IDs to root paths
 	 * @return UUID|null Common root, or null on failure
 	 */
 	protected function getDeepestCommonRoot( array $rootPaths ) {

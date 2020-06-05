@@ -11,6 +11,7 @@ use Flow\Model\UUID;
 use Flow\Search\Connection;
 use Flow\Search\SearchEngine;
 use Flow\Search\Searcher;
+use MWNamespace;
 use Status;
 
 class ApiFlowSearch extends ApiFlowBaseGet {
@@ -59,13 +60,10 @@ class ApiFlowSearch extends ApiFlowBaseGet {
 		$this->getMain()->getErrorFormatter()->addMessagesFromStatus(
 			$this->getModuleName(), $status );
 
+		/** @var \Elastica\ResultSet|null $resultSet */
 		$resultSet = $status->getValue();
 		// $resultSet can be null, if nothing was found
-		if ( $resultSet === null ) {
-			return;
-		}
-		/** @var \Elastica\ResultSet $resultSet */
-		$results = $resultSet->getResults();
+		$results = $resultSet === null ? [] : $resultSet->getResults();
 
 		// list of highlighted words
 		$highlights = [];
@@ -188,7 +186,7 @@ class ApiFlowSearch extends ApiFlowBaseGet {
 			],
 			'namespaces' => [
 				ApiBase::PARAM_ISMULTI => true,
-				ApiBase::PARAM_TYPE => 'namespace',
+				ApiBase::PARAM_TYPE => MWNamespace::getValidNamespaces(),
 			],
 			'moderationState' => [
 				ApiBase::PARAM_ISMULTI => true,
@@ -235,7 +233,7 @@ class ApiFlowSearch extends ApiFlowBaseGet {
 		return 'Search within Flow boards';
 	}
 
-	public function getExamplesMessages() {
+	public function getExamples() {
 		return [
 			'api.php?action=flow&submodule=search&qterm=keyword&qtitle=Main_Page',
 		];

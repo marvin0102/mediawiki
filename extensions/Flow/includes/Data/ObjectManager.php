@@ -303,7 +303,7 @@ class ObjectManager extends ObjectLocator {
 	/**
 	 * @inheritDoc
 	 */
-	protected function load( array $row ) {
+	protected function load( $row ) {
 		$object = parent::load( $row );
 		$this->loaded[$object] = $row;
 		return $object;
@@ -378,7 +378,7 @@ class ObjectManager extends ObjectLocator {
 	 * all keys are set.
 	 *
 	 * @param array $row
-	 * @param string[] $keys
+	 * @param array $keys
 	 * @return array|null
 	 */
 	public static function splitFromRow( array $row, array $keys ) {

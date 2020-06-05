@@ -118,6 +118,7 @@ $wgDiff3 = "/usr/bin/diff3";
 $wgGroupPermissions['*']['createaccount'] = false;
 $wgGroupPermissions['*']['edit'] = false;
 
+
 $wgGroupPermissions['user' ]['move']            = false; 
 $wgGroupPermissions['user' ]['read']            = true; 
 $wgGroupPermissions['user' ]['edit']            = true; 
@@ -125,6 +126,7 @@ $wgGroupPermissions['user' ]['createpage']      = false;
 $wgGroupPermissions['user' ]['createtalk']      = false; 
 $wgGroupPermissions['user' ]['upload']          = false; 
 $wgGroupPermissions['user' ]['reupload']        = false;
+$wgGroupPermissions['user' ]['flow-create-board'] = true;
 
 ## who email is confirmed than can edit wedsite
 $wgAutopromote['emailconfirmed'] = APCOND_EMAILCONFIRMED;
@@ -177,7 +179,9 @@ wfLoadExtension( 'SpamBlacklist' );
 wfLoadExtension( 'SyntaxHighlight_GeSHi' );
 wfLoadExtension( 'TitleBlacklist' );
 wfLoadExtension( 'WikiEditor' );
-#wfLoadExtension( 'Flow' );
+wfLoadExtension( 'Echo' );
+wfLoadExtension( 'Flow' );
+$wgContentHandlerUseDB = true;
 
 # End of automatically generated settings.
 # Add more configuration options below.

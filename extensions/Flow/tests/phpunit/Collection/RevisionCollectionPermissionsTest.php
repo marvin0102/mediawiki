@@ -8,13 +8,10 @@ use Flow\Model\PostRevision;
 use Flow\Model\AbstractRevision;
 use Flow\RevisionActionPermissions;
 use Flow\Tests\PostRevisionTestCase;
-use MediaWiki\Block\DatabaseBlock;
+use Block;
 use User;
 
 /**
- * @covers \Flow\Model\AbstractRevision
- * @covers \Flow\Model\PostRevision
- *
  * @group Database
  * @group Flow
  */
@@ -65,10 +62,10 @@ class RevisionCollectionPermissionsTest extends PostRevisionTestCase {
 	/**
 	 * @var User
 	 */
-	protected $suppressUser;
+	protected $oversightUser;
 
 	/**
-	 * @var DatabaseBlock
+	 * @var Block
 	 */
 	protected $block;
 
@@ -90,10 +87,10 @@ class RevisionCollectionPermissionsTest extends PostRevisionTestCase {
 
 		// block a user
 		$blockedUser = $this->blockedUser();
-		$this->block = new DatabaseBlock( [
+		$this->block = new Block( [
 			'address' => $blockedUser->getName(),
 			'by' => $this->getTestSysop()->getUser()->getId(),
-			'user' => $blockedUser->getId()
+			'user' => $blockedUser->getID()
 		] );
 		$this->block->insert();
 		// ensure that block made it into the database
@@ -114,7 +111,7 @@ class RevisionCollectionPermissionsTest extends PostRevisionTestCase {
 		return [
 			// irregardless of current status, if a user has no permissions for
 			// a specific revision, he can't see it
-			[ 'confirmedUser', 'view', [
+			[ $this->confirmedUser(), 'view', [
 				// Key is the moderation action; value is the 'view' permission
 				// for that corresponding revision after all moderation is done.
 				// In this case, a post will be created with 3 revisions:
@@ -128,20 +125,20 @@ class RevisionCollectionPermissionsTest extends PostRevisionTestCase {
 				[ 'suppress-post' => false ],
 				[ 'restore-post' => true ],
 			] ],
-			[ 'suppressUser', 'view', [
+			[ $this->oversightUser(), 'view', [
 				[ 'new-post' => true ],
 				[ 'suppress-post' => true ],
 				[ 'restore-post' => true ],
 			] ],
 
 			// last moderation status should always bubble down to previous revs
-			[ 'confirmedUser', 'view', [
+			[ $this->confirmedUser(), 'view', [
 				[ 'new-post' => false ],
 				[ 'suppress-post' => false ],
 				[ 'restore-post' => false ],
 				[ 'suppress-post' => false ],
 			] ],
-			[ 'suppressUser', 'view', [
+			[ $this->oversightUser(), 'view', [
 				[ 'new-post' => true ],
 				[ 'suppress-post' => true ],
 				[ 'restore-post' => true ],
@@ -149,11 +146,11 @@ class RevisionCollectionPermissionsTest extends PostRevisionTestCase {
 			] ],
 
 			// bug 61715
-			[ 'confirmedUser', 'history', [
+			[ $this->confirmedUser(), 'history', [
 				[ 'new-post' => false ],
 				[ 'suppress-post' => false ],
 			] ],
-			[ 'confirmedUser', 'history', [
+			[ $this->confirmedUser(), 'history', [
 				[ 'new-post' => true ],
 				[ 'suppress-post' => false ],
 				[ 'restore-post' => false ],
@@ -163,15 +160,8 @@ class RevisionCollectionPermissionsTest extends PostRevisionTestCase {
 
 	/**
 	 * @dataProvider permissionsProvider
-	 *
-	 * @group Broken
 	 */
-	public function testPermissions( $userGetterName, $permissionAction, array $actions ) {
-		// NOTE: the provider cannot create the User object, because it would be creating the
-		// user in the real database tables, not the fake tables provided by MediaWikiTestCase.
-		/** @var User $user */
-		$user = $this->$userGetterName();
-
+	public function testPermissions( User $user, $permissionAction, $actions ) {
 		$permissions = new RevisionActionPermissions( $this->actions, $user );
 
 		// we'll have to process this in 2 steps: first do all of the actions,
@@ -197,9 +187,7 @@ class RevisionCollectionPermissionsTest extends PostRevisionTestCase {
 			$this->assertEquals(
 				$expected,
 				$permissions->isAllowed( $revision, $permissionAction ),
-				'User ' . $user->getName() . ' should ' . ( $expected ? '' : 'not ' ) .
-					'be allowed action ' . $permissionAction . ' on revision ' . key( $action ) .
-					' : ' . $debug . ' : ' . json_encode( $revision::toStorageRow( $revision ) )
+				'User ' . $user->getName() . ' should ' . ( $expected ? '' : 'not ' ) . 'be allowed action ' . $permissionAction . ' on revision ' . key( $action ) . ' : ' . $debug . ' : ' . json_encode( $revision::toStorageRow( $revision ) )
 			);
 		}
 	}
@@ -253,14 +241,14 @@ class RevisionCollectionPermissionsTest extends PostRevisionTestCase {
 		return $this->sysopUser;
 	}
 
-	protected function suppressUser() {
-		if ( !$this->suppressUser ) {
-			$this->suppressUser = User::newFromName( 'UTFlowSuppress' );
-			$this->suppressUser->addToDatabase();
-			$this->suppressUser->addGroup( 'suppress' );
+	protected function oversightUser() {
+		if ( !$this->oversightUser ) {
+			$this->oversightUser = User::newFromName( 'UTFlowOversight' );
+			$this->oversightUser->addToDatabase();
+			$this->oversightUser->addGroup( 'oversight' );
 		}
 
-		return $this->suppressUser;
+		return $this->oversightUser;
 	}
 
 	/**

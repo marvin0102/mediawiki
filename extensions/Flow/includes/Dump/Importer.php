@@ -143,7 +143,7 @@ class Importer {
 
 		$metadata = [ 'workflow' => $this->boardWorkflow ];
 
-		$revisions = $this->getRevisions( [ Header::class, 'fromStorageRow' ] );
+		$revisions = $this->getRevisions( [ 'Flow\\Model\\Header', 'fromStorageRow' ] );
 		foreach ( $revisions as $revision ) {
 			$this->put( $revision, $metadata );
 		}
@@ -210,7 +210,7 @@ class Importer {
 			// @todo: topic-title? (used only in NotificationListener)
 		];
 
-		$revisions = $this->getRevisions( [ PostRevision::class, 'fromStorageRow' ] );
+		$revisions = $this->getRevisions( [ 'Flow\\Model\\PostRevision', 'fromStorageRow' ] );
 		foreach ( $revisions as $revision ) {
 			$this->put( $revision, $metadata );
 		}
@@ -227,7 +227,7 @@ class Importer {
 
 		$metadata = [ 'workflow' => $this->topicWorkflow ];
 
-		$revisions = $this->getRevisions( [ PostSummary::class, 'fromStorageRow' ] );
+		$revisions = $this->getRevisions( [ 'Flow\\Model\\PostSummary', 'fromStorageRow' ] );
 		foreach ( $revisions as $revision ) {
 			$this->put( $revision, $metadata );
 		}
@@ -321,7 +321,7 @@ class Importer {
 		$keys = array_fill_keys( array_keys( Exporter::$map ), null );
 		$attribs += $keys;
 
-		return $callback( $attribs );
+		return call_user_func( $callback, $attribs );
 	}
 
 	/**
@@ -352,7 +352,7 @@ class Importer {
 	private function checkTransWikiMode( $boardWorkflowId, $title ) {
 		/** @var DbFactory $dbFactory */
 		$dbFactory = Container::get( 'db.factory' );
-		$workflowExist = (bool)$dbFactory->getDB( DB_MASTER )->selectField(
+		$workflowExist = !!$dbFactory->getDB( DB_MASTER )->selectField(
 			'flow_workflow',
 			'workflow_id',
 			[ 'workflow_id' => UUID::create( $boardWorkflowId )->getBinary() ],

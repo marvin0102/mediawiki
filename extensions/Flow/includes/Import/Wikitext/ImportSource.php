@@ -29,25 +29,10 @@ class ImportSource implements IImportSource {
 	protected $user;
 
 	/**
-	 * @var Title
-	 */
-	private $title;
-
-	/**
-	 * @var Parser|StubObject
-	 */
-	private $parser;
-
-	/**
-	 * @var string|null
-	 */
-	private $headerSuffix;
-
-	/**
 	 * @param Title $title
 	 * @param Parser|StubObject $parser
 	 * @param User $user User to take actions as
-	 * @param string|null $headerSuffix
+	 * @param string $headerSuffix
 	 * @throws ImportException When $title is an external title
 	 */
 	public function __construct( Title $title, $parser, User $user, $headerSuffix = null ) {
@@ -78,14 +63,14 @@ class ImportSource implements IImportSource {
 
 		// If sections exist only take the content from the top of the page
 		// to the first section.
-		$nativeContent = $revision->getContent()->getNativeData();
-		$output = $this->parser->parse( $nativeContent, $this->title, new ParserOptions );
+		$content = $revision->getContent()->getNativeData();
+		$output = $this->parser->parse( $content, $this->title, new ParserOptions );
 		$sections = $output->getSections();
 		if ( $sections ) {
-			$nativeContent = substr( $nativeContent, 0, $sections[0]['byteoffset'] );
+			$content = substr( $content, 0, $sections[0]['byteoffset'] );
 		}
 
-		$content = TemplateHelper::extractTemplates( $nativeContent, $this->title );
+		$content = TemplateHelper::extractTemplates( $content, $this->title );
 
 		$template = wfMessage( 'flow-importer-wt-converted-template' )->inContentLanguage()->plain();
 		$arguments = implode( '|', [

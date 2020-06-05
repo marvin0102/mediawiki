@@ -15,8 +15,10 @@
 	 * @param {Object} [config] Configuration options
 	 */
 	mw.flow.dm.Board = function mwFlowDmBoard( data, config ) {
+		config = config || {};
+
 		// Parent constructor
-		mw.flow.dm.Board.super.call( this, config );
+		mw.flow.dm.Board.parent.call( this, config );
 
 		// Mixin constructor
 		mw.flow.dm.List.call( this );
@@ -82,8 +84,8 @@
 				topicCount: this.getItemCount(),
 				description: this.getDescription() && this.getDescription().getHashObject()
 			},
-			// Parent method
-			mw.flow.dm.Board.super.prototype.getHashObject.apply( this, arguments )
+			// Parent
+			mw.flow.dm.Board.parent.prototype.getHashObject.call( this )
 		);
 	};
 

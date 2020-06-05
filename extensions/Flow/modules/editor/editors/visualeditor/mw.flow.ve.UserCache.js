@@ -1,4 +1,4 @@
-( function () {
+( function ( $, mw, OO, ve ) {
 	'use strict';
 
 	/**
@@ -8,8 +8,7 @@
 	 * @constructor
 	 */
 	mw.flow.ve.UserCache = function FlowVeUserCache() {
-		// Parent constructor
-		mw.flow.ve.UserCache.super.apply( this, arguments );
+		mw.flow.ve.UserCache.parent.call( this );
 	};
 
 	/* Inheritance */
@@ -92,4 +91,4 @@
 
 	// TODO we need a platform class or some other place to put this
 	mw.flow.ve.userCache = new mw.flow.ve.UserCache();
-}() );
+}( jQuery, mediaWiki, OO, ve ) );

@@ -2,7 +2,7 @@
  * Contains loadMore, jumpToTopic, and topic titles list functionality.
  */
 
-( function () {
+( function ( $, mw, moment ) {
 	/**
 	 * Bind UI events and infinite scroll handler for load more and titles list functionality.
 	 * @param {jQuery} $container
@@ -55,11 +55,10 @@
 					// Not going the full $( '.flow-board-navigation' ).height()
 					// because then the load more button (above the new topic)
 					// would get in sight and any scroll would fire it
-					// eslint-disable-next-line no-jquery/no-global-selector
 					$( 'html, body' ).scrollTop( $renderedTopic.offset().top - 20 );
 
 					// Focus on given topic
-					$renderedTopic.trigger( 'click' ).trigger( 'focus' );
+					$renderedTopic.click().focus();
 
 					/*
 					 * Re-enable infinite scroll. Only doing that after a couple
@@ -346,7 +345,6 @@
 		this.renderedTopics[ currentTopicId ] = $topic;
 
 		// Remove any topics that are no longer on the page, just in case
-		// eslint-disable-next-line no-jquery/no-each-util
 		$.each( this.renderedTopics, function ( topicId, $topic ) {
 			if ( !$topic.closest( self.$board ).length ) {
 				delete self.renderedTopics[ topicId ];
@@ -561,7 +559,7 @@
 				flowBoard.renderedTopics[ topicId ] = _render( [ topicId ] );
 				$allRendered.push( flowBoard.renderedTopics[ topicId ][ 0 ] );
 				toInsert.push( topicId );
-				if ( flowBoard.orderedTopicIds.indexOf( topicId ) === -1 ) {
+				if ( $.inArray( topicId, flowBoard.orderedTopicIds ) === -1 ) {
 					flowBoard.orderedTopicIds.push( topicId );
 				}
 				// @todo this is already done elsewhere, but it runs after insert
@@ -580,7 +578,7 @@
 			// initial page load starts at the begining.
 			for ( i = 1; i < flowBoard.orderedTopicIds.length; i++ ) {
 				// topic is not to be inserted yet.
-				if ( toInsert.indexOf( flowBoard.orderedTopicIds[ i ] ) === -1 ) {
+				if ( $.inArray( flowBoard.orderedTopicIds[ i ], toInsert ) === -1 ) {
 					continue;
 				}
 
@@ -606,14 +604,14 @@
 			// page but also the ones loaded by the toc.  If these topics are due
 			// to a jump rather than forward auto-pagination the prior topic will
 			// not be rendered.
-			i = flowBoard.orderedTopicIds.indexOf( topicsData.roots[ 0 ] );
+			i = $.inArray( topicsData.roots[ 0 ], flowBoard.orderedTopicIds );
 			if ( i > 0 && flowBoard.renderedTopics[ flowBoard.orderedTopicIds[ i - 1 ] ] === undefined ) {
 				_createRevPagination( flowBoard.renderedTopics[ topicsData.roots[ 0 ] ] );
 			}
 			// Same for forward pagination, if we jumped and then scrolled backwards the
 			// topic after the last will already be rendered, and forward pagination
 			// will not be necessary.
-			i = flowBoard.orderedTopicIds.indexOf( topicsData.roots[ topicsData.roots.length - 1 ] );
+			i = $.inArray( topicsData.roots[ topicsData.roots.length - 1 ], flowBoard.orderedTopicIds );
 			if ( i === flowBoard.orderedTopicIds.length - 1 || flowBoard.renderedTopics[ flowBoard.orderedTopicIds[ i + 1 ] ] === undefined ) {
 				_createFwdPagination( flowBoard.renderedTopics[ topicsData.roots[ topicsData.roots.length - 1 ] ] );
 			}
@@ -630,4 +628,4 @@
 
 	// Mixin to FlowBoardComponent
 	mw.flow.mixinComponent( 'board', FlowBoardComponentLoadMoreFeatureMixin );
-}() );
+}( jQuery, mediaWiki, moment ) );

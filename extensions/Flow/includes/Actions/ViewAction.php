@@ -8,7 +8,7 @@ use Page;
 use Title;
 
 class ViewAction extends FlowAction {
-	public function __construct( Page $page, IContextSource $context ) {
+	function __construct( Page $page, IContextSource $context ) {
 		parent::__construct( $page, $context, 'view' );
 	}
 
@@ -29,7 +29,7 @@ class ViewAction extends FlowAction {
 	}
 
 	protected function getCategories( Title $title ) {
-		$id = $title->getArticleID();
+		$id = $title->getArticleId();
 		if ( !$id ) {
 			return [];
 		}

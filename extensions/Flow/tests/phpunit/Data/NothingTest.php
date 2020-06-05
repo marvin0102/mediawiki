@@ -57,7 +57,6 @@ class FlowNothingTest extends FlowTestCase {
 	}
 
 	/**
-	 * @covers \Flow\Data\Utils\SortArrayByKeys
 	 * @dataProvider sortArrayByKeysProvider
 	 */
 	public function testSortArrayByKeys( $message, array $keys, array $array, array $sorted, $strict = true ) {

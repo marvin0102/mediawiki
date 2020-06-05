@@ -54,11 +54,6 @@ $namespaceNames['ckb'] = [
 	NS_TOPIC => 'بابه‌ت',
 ];
 
-/** Czech */
-$namespaceNames['cs'] = [
-	NS_TOPIC => 'Téma',
-];
-
 /** German */
 $namespaceNames['de'] = [
 	NS_TOPIC => 'Thema',
@@ -123,11 +118,6 @@ $namespaceNames['id'] = [
 	NS_TOPIC => 'Topik',
 ];
 
-/** Ingush */
-$namespaceNames['inh'] = [
-	NS_TOPIC => 'Тема',
-];
-
 /** Italian */
 $namespaceNames['it'] = [
 	NS_TOPIC => 'Argomento',
@@ -141,11 +131,6 @@ $namespaceNames['ko'] = [
 /** Luxembourgish */
 $namespaceNames['lb'] = [
 	NS_TOPIC => 'Thema',
-];
-
-/** Lingua Franca Nova */
-$namespaceNames['lfn'] = [
-	NS_TOPIC => 'Tema',
 ];
 
 /** Northern Luri */
@@ -176,11 +161,6 @@ $namespaceNames['nb'] = [
 /** Dutch */
 $namespaceNames['nl'] = [
 	NS_TOPIC => 'Onderwerp',
-];
-
-/** N'Ko */
-$namespaceNames['nqo'] = [
-	NS_TOPIC => 'ߢߊߝߐߟߌ ߞߎ߲߬ߕߐ߮',
 ];
 
 /** Occitan */

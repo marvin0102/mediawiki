@@ -21,7 +21,7 @@ require_once "$IP/includes/utils/RowUpdateGenerator.php";
 class FlowUpdateWorkflowPageId extends LoggedUpdateMaintenance {
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( "Update workflow_page_id with the page id of its specified ns/title" );
+		$this->mDescription = "Update workflow_page_id with the page id of its specified ns/title";
 		$this->requireExtension( 'Flow' );
 		$this->setBatchSize( 300 );
 	}
@@ -158,5 +158,5 @@ class WorkflowPageIdUpdateGenerator implements RowUpdateGenerator {
 	}
 }
 
-$maintClass = FlowUpdateWorkflowPageId::class;
+$maintClass = "FlowUpdateWorkflowPageId";
 require_once RUN_MAINTENANCE_IF_MAIN;

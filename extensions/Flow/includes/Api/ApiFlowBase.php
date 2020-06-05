@@ -4,7 +4,7 @@ namespace Flow\Api;
 
 use ApiBase;
 use ApiMessage;
-use Flow\Block\AbstractBlock;
+use Flow\Block\Block;
 use Flow\Container;
 use Flow\Model\AbstractRevision;
 use Flow\WorkflowLoader;
@@ -106,7 +106,7 @@ abstract class ApiFlowBase extends ApiBase {
 	/**
 	 * Kill the request if errors were encountered.
 	 *
-	 * @param AbstractBlock[] $blocks
+	 * @param Block[] $blocks
 	 */
 	protected function processError( $blocks ) {
 		$status = Status::newGood();

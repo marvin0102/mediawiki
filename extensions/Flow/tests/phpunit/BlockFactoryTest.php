@@ -5,42 +5,21 @@ namespace Flow\Tests;
 use Flow\BlockFactory;
 
 /**
- * @covers \Flow\BlockFactory
- *
  * @group Flow
  */
 class BlockFactoryTest extends FlowTestCase {
 
 	public function provideDataCreateBlocks() {
 		return [
-			[
-				'discussion',
-				[
-					\Flow\Block\HeaderBlock::class,
-					\Flow\Block\TopicListBlock::class,
-					\Flow\Block\BoardHistoryBlock::class,
-				]
-			],
-			[
-				'topic',
-				[
-					\Flow\Block\TopicBlock::class,
-					\Flow\Block\TopicSummaryBlock::class,
-				]
-			],
+			[ 'discussion', [ 'Flow\Block\HeaderBlock', 'Flow\Block\TopicListBlock', 'Flow\Block\BoardHistoryBlock' ] ],
+			[ 'topic', [ 'Flow\Block\TopicBlock', 'Flow\Block\TopicSummaryBlock' ] ],
 		];
 	}
 
 	/**
-	 * @covers \Flow\Block\AbstractBlock::__construct
-	 * @covers \Flow\Block\BoardHistoryBlock::__construct
-	 * @covers \Flow\Block\HeaderBlock::__construct
-	 * @covers \Flow\Block\TopicBlock::__construct
-	 * @covers \Flow\Block\TopicListBlock::__construct
-	 * @covers \Flow\Block\TopicSummaryBlock::__construct
 	 * @dataProvider provideDataCreateBlocks
 	 */
-	public function testCreateBlocks( $workflowType, array $expectedResults ) {
+	public function testCreateBlocks( $workflowType, $expectedResults ) {
 		$factory = $this->createBlockFactory();
 		$workflow = $this->mockWorkflow( $workflowType );
 
@@ -54,19 +33,22 @@ class BlockFactoryTest extends FlowTestCase {
 		$this->assertEquals( $results, $expectedResults );
 	}
 
+	/**
+	 * @expectedException \Flow\Exception\DataModelException
+	 */
 	public function testCreateBlocksWithInvalidInputException() {
 		$factory = $this->createBlockFactory();
 		$workflow = $this->mockWorkflow( 'a-bad-database-flow-workflow' );
-		$this->expectException( \Flow\Exception\DataModelException::class );
+		// Trigger DataModelException
 		$factory->createBlocks( $workflow );
 	}
 
 	protected function createBlockFactory() {
-		$storage = $this->getMockBuilder( \Flow\Data\ManagerGroup::class )
+		$storage = $this->getMockBuilder( '\Flow\Data\ManagerGroup' )
 			->disableOriginalConstructor()
 			->getMock();
 
-		$rootPostLoader = $this->getMockBuilder( \Flow\Repository\RootPostLoader::class )
+		$rootPostLoader = $this->getMockBuilder( '\Flow\Repository\RootPostLoader' )
 			->disableOriginalConstructor()
 			->getMock();
 
@@ -74,7 +56,7 @@ class BlockFactoryTest extends FlowTestCase {
 	}
 
 	protected function mockWorkflow( $type ) {
-		$workflow = $this->getMockBuilder( \Flow\Model\Workflow::class )
+		$workflow = $this->getMockBuilder( '\Flow\Model\Workflow' )
 			->disableOriginalConstructor()
 			->getMock();
 		$workflow->expects( $this->any() )

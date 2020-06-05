@@ -26,10 +26,6 @@ abstract class BoardHistoryIndex extends TopKIndex {
 	 */
 	protected $om;
 
-	/**
-	 * @inheritDoc
-	 * @suppress PhanParamReqAfterOpt
-	 */
 	public function __construct(
 		FlowObjectCache $cache,
 		BoardHistoryStorage $storage,
@@ -133,7 +129,7 @@ abstract class BoardHistoryIndex extends TopKIndex {
 		if ( !$found ) {
 			throw new DataModelException(
 				"No topic list contains topic " . $topicId->getAlphadecimal() .
-				", called for revision " . $object->getRevisionId()->getAlphadecimal()
+				", called for revision " .  $object->getRevisionId()->getAlphadecimal()
 			);
 		}
 

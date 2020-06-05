@@ -10,11 +10,7 @@ use User;
 use Title;
 
 /**
- * @covers \Flow\Model\AbstractRevision
- * @covers \Flow\Model\PostRevision
- *
  * @group Flow
- * @group Database
  */
 class PostRevisionTest extends PostRevisionTestCase {
 	/**

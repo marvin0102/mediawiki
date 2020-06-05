@@ -2,7 +2,7 @@
  * Initializes TemplateEngine (Handlebars), and API (FlowApi).
  */
 
-( function () {
+( function ( $, mw ) {
 	/**
 	 * Initializes Handlebars and FlowApi.
 	 * @constructor
@@ -24,4 +24,4 @@
 
 	// Copy static and prototype from mixin to main class
 	mw.flow.mixinComponent( 'component', FlowComponentEnginesMixin );
-}() );
+}( jQuery, mediaWiki ) );

@@ -9,19 +9,14 @@ use Flow\Exception\WikitextException;
 use Flow\LinksTableUpdater;
 use Flow\Model\AbstractRevision;
 use Flow\Model\PostRevision;
-use Flow\Model\Reference;
 use Flow\Model\UUID;
 use Flow\Model\Workflow;
+use Flow\Parsoid\ReferenceExtractor;
 use Flow\Parsoid\ReferenceFactory;
 use Flow\Conversion\Utils;
 use Title;
 
 /**
- * @covers \Flow\Data\Listener\ReferenceRecorder
- * @covers \Flow\Model\AbstractRevision
- * @covers \Flow\Model\PostRevision
- * @covers \Flow\Parsoid\ReferenceFactory
- *
  * @group Flow
  * @group Database
  */
@@ -47,6 +42,11 @@ class LinksTableTest extends PostRevisionTestCase {
 	 * @var ManagerGroup
 	 */
 	protected $storage;
+
+	/**
+	 * @var ReferenceExtractor
+	 */
+	protected $extractor;
 
 	/**
 	 * @var ReferenceRecorder
@@ -75,6 +75,7 @@ class LinksTableTest extends PostRevisionTestCase {
 		$this->revision = $this->generateObject();
 		$this->workflow = $this->workflows[$this->revision->getCollectionId()->getAlphadecimal()];
 		$this->storage = Container::get( 'storage' );
+		$this->extractor = Container::get( 'reference.extractor' );
 		$this->recorder = Container::get( 'reference.recorder' );
 		$this->updater = Container::get( 'reference.updater.links-tables' );
 
@@ -96,7 +97,7 @@ class LinksTableTest extends PostRevisionTestCase {
 	 * @return PostRevision
 	 * @throws \Flow\Exception\FlowException
 	 */
-	protected function generatePost( array $overrides ) {
+	protected function generatePost( $overrides ) {
 		$uuid = UUID::create();
 		return $this->generateObject( $overrides + [
 			'rev_change_type' => 'reply',
@@ -187,7 +188,7 @@ class LinksTableTest extends PostRevisionTestCase {
 	/**
 	 * @dataProvider provideGetReferencesFromRevisionContent
 	 */
-	public function testGetReferencesFromRevisionContent( $content, array $expectedReferences ) {
+	public function testGetReferencesFromRevisionContent( $content, $expectedReferences ) {
 		$content = Utils::convert( 'wikitext', 'html', $content, $this->workflow->getOwnerTitle() );
 		$revision = $this->generatePost( [ 'rev_content' => $content ] );
 
@@ -201,7 +202,7 @@ class LinksTableTest extends PostRevisionTestCase {
 	/**
 	 * @dataProvider provideGetReferencesFromRevisionContent
 	 */
-	public function testGetReferencesAfterRevisionInsert( $content, array $expectedReferences ) {
+	public function testGetReferencesAfterRevisionInsert( $content, $expectedReferences ) {
 		$content = Utils::convert( 'wikitext', 'html', $content, $this->workflow->getOwnerTitle() );
 		$revision = $this->generatePost( [ 'rev_content' => $content ] );
 
@@ -334,7 +335,7 @@ class LinksTableTest extends PostRevisionTestCase {
 	/**
 	 * @dataProvider provideReferenceDiff
 	 */
-	public function testReferenceDiff( array $old, array $new, array $expectedAdded, array $expectedRemoved, array $globals = [] ) {
+	public function testReferenceDiff( $old, $new, $expectedAdded, $expectedRemoved, $globals = [] ) {
 		if ( $globals ) {
 			$this->setMwGlobals( $globals );
 		}
@@ -387,23 +388,13 @@ class LinksTableTest extends PostRevisionTestCase {
 					],
 				],
 			],
-			[
-				[
-					$references['ExtLinkWithInvalidUTF8Sequence']
-				],
-				[
-					'getExternalLinks' => [
-						'http://www.google.com/%E8' => true,
-					],
-				]
-			],
 		];
 	}
 
 	/**
 	 * @dataProvider provideMutateParserOutput
 	 */
-	public function testMutateParserOutput( array $references, array $expectedItems ) {
+	public function testMutateParserOutput( $references, $expectedItems ) {
 		list( $workflow, $revision, $title ) = $this->getBlandTestObjects();
 
 		/*
@@ -445,13 +436,6 @@ class LinksTableTest extends PostRevisionTestCase {
 		];
 	}
 
-	/**
-	 * @param Workflow $workflow
-	 * @param AbstractRevision $revision
-	 * @param array[] $references
-	 *
-	 * @return Reference[]
-	 */
 	protected function expandReferences( Workflow $workflow, AbstractRevision $revision, array $references ) {
 		$referenceObjs = [];
 		$factory = new ReferenceFactory( $workflow, $revision->getRevisionType(), $revision->getCollectionId() );
@@ -495,11 +479,6 @@ class LinksTableTest extends PostRevisionTestCase {
 				'refType' => 'link',
 				'value' => 'http://www.google.com'
 			],
-			'ExtLinkWithInvalidUTF8Sequence' => [
-				'factoryMethod' => 'createUrlReference',
-				'refType' => 'link',
-				'value' => 'http://www.google.com/%E8'
-			],
 			'fooImage' => [
 				'factoryMethod' => 'createWikiReference',
 				'refType' => 'file',
@@ -513,12 +492,7 @@ class LinksTableTest extends PostRevisionTestCase {
 		];
 	}
 
-	/**
-	 * @param Reference[] $input
-	 *
-	 * @return string[]
-	 */
-	protected function flattenReferenceList( array $input ) {
+	protected function flattenReferenceList( $input ) {
 		$list = [];
 
 		foreach ( $input as $reference ) {
@@ -529,11 +503,7 @@ class LinksTableTest extends PostRevisionTestCase {
 		return array_keys( $list );
 	}
 
-	/**
-	 * @param Reference[] $input1
-	 * @param Reference[] $input2
-	 */
-	protected function assertReferenceListsEqual( array $input1, array $input2 ) {
+	protected function assertReferenceListsEqual( $input1, $input2 ) {
 		$list1 = $this->flattenReferenceList( $input1 );
 		$list2 = $this->flattenReferenceList( $input2 );
 

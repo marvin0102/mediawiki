@@ -1,4 +1,4 @@
-( function () {
+( function ( $, mw, OO, ve ) {
 	'use strict';
 
 	// Based partly on ve.ui.MWTemplateDialog
@@ -12,9 +12,8 @@
 	 * @constructor
 	 * @param {Object} [config] Configuration options
 	 */
-	mw.flow.ve.ui.MentionInspector = function FlowVeMentionInspector() {
-		// Parent constructor
-		mw.flow.ve.ui.MentionInspector.super.apply( this, arguments );
+	mw.flow.ve.ui.MentionInspector = function FlowVeMentionInspector( config ) {
+		mw.flow.ve.ui.MentionInspector.parent.call( this, config );
 
 		// this.selectedNode is the ve.dm.MWTransclusionNode, which we inherit
 		// from ve.ui.NodeInspector.
@@ -51,7 +50,7 @@
 			flags: [ 'destructive' ],
 			modes: 'edit'
 		}
-	].concat( mw.flow.ve.ui.MentionInspector.super.static.actions );
+	].concat( mw.flow.ve.ui.MentionInspector.parent.static.actions );
 
 	// Instance Methods
 
@@ -155,15 +154,12 @@
 	mw.flow.ve.ui.MentionInspector.prototype.initialize = function () {
 		var flowBoard, overlay, iconWidget;
 
-		// Parent method
-		mw.flow.ve.ui.MentionInspector.super.prototype.initialize.apply( this, arguments );
+		mw.flow.ve.ui.MentionInspector.parent.prototype.initialize.call( this );
 
 		// I would much prefer to use dependency injection to get the list of topic posters
 		// into the inspector, but I haven't been able to figure out how to pass it through
 		// yet.
 
-		// TODO: This will return false for suface widgets in the global overlay.
-		// Fix this so that it always finds the board associated with the root surface.
 		flowBoard = mw.flow.getPrototypeMethod( 'board', 'getInstanceByElement' )(
 			this.$element
 		);
@@ -172,7 +168,7 @@
 		overlay = this.manager.getOverlay();
 		this.targetInput = new mw.flow.ve.ui.MentionTargetInputWidget( {
 			$overlay: overlay ? overlay.$element : this.$frame,
-			topicPosters: flowBoard ? flowBoard.getTopicPosters( this.$element ) : []
+			topicPosters: flowBoard.getTopicPosters( this.$element )
 		} );
 		iconWidget = new OO.ui.IconWidget( {
 			icon: 'notice'
@@ -239,8 +235,7 @@
 			}, this );
 		}
 
-		// Parent method
-		return mw.flow.ve.ui.MentionInspector.super.prototype.getActionProcess.apply( this, arguments );
+		return mw.flow.ve.ui.MentionInspector.parent.prototype.getActionProcess.call( this, action );
 	};
 
 	// Technically, these are private.  However, it's necessary to override them (and not call
@@ -277,8 +272,7 @@
 	 * @return {OO.ui.Process}
 	 */
 	mw.flow.ve.ui.MentionInspector.prototype.getSetupProcess = function ( data ) {
-		// Parent method
-		return mw.flow.ve.ui.MentionInspector.super.prototype.getSetupProcess.apply( this, arguments )
+		return mw.flow.ve.ui.MentionInspector.parent.prototype.getSetupProcess.call( this, data )
 			.next( function () {
 				var templateModel, promise, atFragment;
 
@@ -328,17 +322,16 @@
 			}, this );
 	};
 
-	mw.flow.ve.ui.MentionInspector.prototype.getReadyProcess = function () {
-		// Parent method
-		return mw.flow.ve.ui.MentionInspector.super.prototype.getReadyProcess.apply( this, arguments )
+	mw.flow.ve.ui.MentionInspector.prototype.getReadyProcess = function ( data ) {
+		return mw.flow.ve.ui.MentionInspector.parent.prototype.getReadyProcess.call( this, data )
 			.next( function () {
 				this.targetInput.focus();
 			}, this );
 	};
 
-	mw.flow.ve.ui.MentionInspector.prototype.getTeardownProcess = function () {
-		// Parent method
-		return mw.flow.ve.ui.MentionInspector.super.prototype.getTeardownProcess.apply( this, arguments )
+	mw.flow.ve.ui.MentionInspector.prototype.getTeardownProcess = function ( data ) {
+		data = data || {};
+		return mw.flow.ve.ui.MentionInspector.parent.prototype.getTeardownProcess.call( this, data )
 			.first( function () {
 				// Cleanup
 				this.$element.removeClass( 'flow-ve-ui-mentionInspector-ready' );
@@ -363,15 +356,16 @@
 	 * @return {ve.dm.Node|null} Selected node
 	 */
 	mw.flow.ve.ui.MentionInspector.prototype.getSelectedNode = function () {
-		// Parent method
-		var node = mw.flow.ve.ui.MentionInspector.super.prototype.getSelectedNode.apply( this, arguments );
 		// Checks the model class
-		if ( node && node.isSingleTemplate( mw.flow.ve.ui.MentionInspector.static.template ) ) {
-			return node;
+		var node = mw.flow.ve.ui.MentionInspector.parent.prototype.getSelectedNode.call( this );
+		if ( node !== null ) {
+			if ( node.isSingleTemplate( mw.flow.ve.ui.MentionInspector.static.template ) ) {
+				return node;
+			}
 		}
 
 		return null;
 	};
 
 	ve.ui.windowFactory.register( mw.flow.ve.ui.MentionInspector );
-}() );
+}( jQuery, mediaWiki, OO, ve ) );

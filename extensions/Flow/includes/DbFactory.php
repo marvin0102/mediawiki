@@ -61,12 +61,12 @@ class DbFactory {
 	/**
 	 * Gets a load balancer for the Flow-specific database.
 	 *
-	 * @return \Wikimedia\Rdbms\ILoadBalancer
+	 * @return \Wikimedia\Rdbms\LoadBalancer
 	 */
 	public function getLB() {
 		$lbFactory = MediaWikiServices::getInstance()->getDBLoadBalancerFactory();
 		if ( $this->cluster !== false ) {
-			return $lbFactory->getExternalLB( $this->cluster );
+			return $lbFactory->getExternalLB( $this->cluster, $this->wiki );
 		} else {
 			return $lbFactory->getMainLB( $this->wiki );
 		}

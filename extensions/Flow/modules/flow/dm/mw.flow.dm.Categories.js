@@ -10,6 +10,8 @@
 	 * @param {Object} [config] Configuration options
 	 */
 	mw.flow.dm.Categories = function mwFlowDmCategories( config ) {
+		config = config || {};
+
 		// Mixin constructor
 		OO.EventEmitter.call( this, config );
 

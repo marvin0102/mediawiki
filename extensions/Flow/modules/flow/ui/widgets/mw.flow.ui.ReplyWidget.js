@@ -1,4 +1,4 @@
-( function () {
+( function ( $ ) {
 	/**
 	 * Flow reply widget
 	 *
@@ -26,7 +26,7 @@
 		this.isProbablyEditable = mw.config.get( 'wgIsProbablyEditable' );
 
 		// Parent constructor
-		mw.flow.ui.ReplyWidget.super.call( this, config );
+		mw.flow.ui.ReplyWidget.parent.call( this, config );
 
 		this.api = new mw.flow.dm.APIHandler();
 
@@ -176,8 +176,7 @@
 				placeholder: this.placeholder,
 				saveMsgKey: mw.user.isAnon() ? 'flow-reply-link-anonymously' : 'flow-reply-link',
 				classes: [ 'flow-ui-replyWidget-editor' ],
-				saveable: this.isProbablyEditable,
-				id: 'reply/' + this.replyTo
+				saveable: this.isProbablyEditable
 			}, this.editorOptions ) );
 
 			this.onEditorChange();
@@ -242,11 +241,9 @@
 
 	/**
 	 * Destroy the widget
-	 *
-	 * @return {jQuery.Promise} Promise which resolves when the widget is destroyed
 	 */
 	mw.flow.ui.ReplyWidget.prototype.destroy = function () {
-		return this.editor.destroy();
+		this.editor.destroy();
 	};
 
-}() );
+}( jQuery ) );

@@ -8,12 +8,7 @@ use Flow\Tests\PostRevisionTestCase;
 use Title;
 
 /**
- * @covers \Flow\Model\AbstractRevision
- * @covers \Flow\Model\PostRevision
- * @covers \Flow\SpamFilter\SpamRegex
- *
  * @group Flow
- * @group Database
  */
 class SpamRegexTest extends PostRevisionTestCase {
 	/**
@@ -25,13 +20,13 @@ class SpamRegexTest extends PostRevisionTestCase {
 		return [
 			[
 				// default new topic title revision - no spam
-				[],
+				$this->generateObject(),
 				null,
 				true
 			],
 			[
 				// revision with spam
-				[ 'rev_content' => 'http://spam', 'rev_flags' => 'html' ],
+				$this->generateObject( [ 'rev_content' => 'http://spam', 'rev_flags' => 'html' ] ),
 				null,
 				false
 			],
@@ -41,11 +36,10 @@ class SpamRegexTest extends PostRevisionTestCase {
 	/**
 	 * @dataProvider spamProvider
 	 */
-	public function testSpam( $newRevisionRow, PostRevision $oldRevision = null, $expected ) {
-		$newRevision = $this->generateObject( $newRevisionRow );
+	public function testSpam( PostRevision $newRevision, PostRevision $oldRevision = null, $expected ) {
 		$title = Title::newFromText( 'UTPage' );
 
-		$status = $this->spamFilter->validate( $this->getMock( \IContextSource::class ), $newRevision, $oldRevision, $title, $title );
+		$status = $this->spamFilter->validate( $this->getMock( 'IContextSource' ), $newRevision, $oldRevision, $title, $title );
 		$this->assertEquals( $expected, $status->isOK() );
 	}
 

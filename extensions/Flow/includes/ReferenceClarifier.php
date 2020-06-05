@@ -13,7 +13,7 @@ class ReferenceClarifier {
 	protected $storage, $urlGenerator;
 	protected $referenceCache;
 
-	public function __construct( ManagerGroup $storage, UrlGenerator $urlGenerator ) {
+	function __construct( ManagerGroup $storage, UrlGenerator $urlGenerator ) {
 		$this->storage = $storage;
 		$this->urlGenerator = $urlGenerator;
 		$this->referenceCache = [];
@@ -74,7 +74,9 @@ class ReferenceClarifier {
 		$fromT = $from->getPrefixedDBkey();
 		$toT = 'title:' . $to->getPrefixedDBkey();
 
-		return $this->referenceCache[$fromT][$toT] ?? [];
+		return isset( $this->referenceCache[$fromT][$toT] )
+			? $this->referenceCache[$fromT][$toT]
+			: [];
 	}
 
 	/**
@@ -86,7 +88,7 @@ class ReferenceClarifier {
 	protected function getObjectLink( UUID $workflow, $objectType, UUID $objectId ) {
 		if ( $objectType === 'post' ) {
 			$anchor = $this->urlGenerator->postLink( null, $workflow, $objectId );
-		} elseif ( $objectType === 'header' || $objectType === 'post-summary' ) {
+		} elseif ( $objectType === 'header' ) {
 			$anchor = $this->urlGenerator->workflowLink( null, $workflow );
 		} else {
 			wfDebugLog( 'Flow', __METHOD__ . ": Unknown \$objectType: $objectType" );

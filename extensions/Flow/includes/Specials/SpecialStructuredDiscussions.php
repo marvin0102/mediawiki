@@ -30,16 +30,8 @@ class SpecialStructuredDiscussions extends FormSpecialPage {
 	 */
 	protected $uuid;
 
-	public function __construct() {
+	function __construct() {
 		parent::__construct( 'StructuredDiscussions' );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function execute( $par ) {
-		parent::execute( $par );
-		$this->addHelplink( 'Help:Structured_Discussions' );
 	}
 
 	/**

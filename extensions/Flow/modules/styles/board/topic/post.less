@@ -67,7 +67,6 @@ form.flow-post {
 			opacity: 0;
 			.transition( opacity 0.25s ease );
 		}
-
 		&:hover .mw-usertoollinks {
 			opacity: 1;
 		}
@@ -180,6 +179,7 @@ form.flow-post {
 			}
 		}
 	}
+
 }
 
 // Comment metadata
@@ -192,7 +192,6 @@ form.flow-post {
 		/* @noflip */
 		text-align: right;
 	}
-
 	.mw-content-rtl & {
 		/* @noflip */
 		text-align: left;
@@ -200,6 +199,7 @@ form.flow-post {
 }
 
 .flow-post-meta-actions {
+
 	.mw-content-ltr & {
 		/* @noflip */
 		float: left;
@@ -218,7 +218,6 @@ form.flow-post {
 			display: inline-block;
 			color: @colorGray7;
 		}
-
 		&:last-child {
 			&:after {
 				content: '';
@@ -230,14 +229,11 @@ form.flow-post {
 // MEDIA QUERIES
 @media all and ( min-width: @small ) {
 	.flow-post {
-		padding: 0;
-
 		/* left margin provided by highlighting zone */
 		.mw-content-ltr & {
 			/* @noflip */
 			margin: 1em 0 0 @topicIndent;
 		}
-
 		.mw-content-ltr .flow-replies & {
 			/* @noflip */
 			margin-left: @replyIndent;
@@ -247,11 +243,12 @@ form.flow-post {
 			/* @noflip */
 			margin: 1em @topicIndent 0 0;
 		}
-
 		.mw-content-rtl .flow-replies & {
 			/* @noflip */
 			margin-right: @replyIndent;
 		}
+
+		padding: 0;
 
 		.flow-author {
 			line-height: inherit;
@@ -261,11 +258,9 @@ form.flow-post {
 		&.flow-post-highlight-newer > .flow-post-main .flow-post-content {
 			.minimalPostHighlight( 1.3em );
 		}
-
 		.flow-post.flow-post-highlight-newer > .flow-post-main .flow-post-content {
 			.minimalPostHighlight( 0.7em );
 		}
-
 		.flow-post .flow-post.flow-post-highlight-newer > .flow-post-main .flow-post-content {
 			.minimalPostHighlight( 0.7em );
 		}
@@ -275,7 +270,7 @@ form.flow-post {
 // What to do? vector changes this width on us from screen-hd.less with:
 //
 // @media screen and ( min-width: 982px )
-// .mw-body {
+// div#content {
 //   margin-left: 11em;
 //   padding: 1.25em 1.5em 1.5em 1.5em;
 // }

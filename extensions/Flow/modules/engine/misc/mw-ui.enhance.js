@@ -6,7 +6,7 @@
 mw.flow.ui.enhance = {};
 
 /** @class mw.ui.enhance */
-( function () {
+( function ( mw, $ ) {
 	/*
 	* Reduce eye-wandering due to adjacent colorful buttons
 	* This will make unhovered and unfocused sibling buttons become faded and blurred
@@ -232,7 +232,7 @@ mw.flow.ui.enhance = {};
 			if ( !$tooltip ) {
 				// See if content itself is a tooltip
 				try {
-					if ( typeof content === 'string' ) {
+					if ( $.type( content ) === 'string' ) {
 						$tooltip = $( $.parseHTML( content ) );
 					} else {
 						$tooltip = $( content );
@@ -295,18 +295,10 @@ mw.flow.ui.enhance = {};
 
 			// Use the preferred pointing direction first
 			switch ( optionsUnreferenced.tooltipPointing ) {
-				case 'left':
-					locationOrder = [ 'left', 'right', 'left' ];
-					break;
-				case 'right':
-					locationOrder = [ 'right', 'left', 'right' ];
-					break;
-				case 'down':
-					locationOrder = [ 'down', 'up', 'down' ];
-					break;
-				default:
-					locationOrder = [ 'up', 'down', 'up' ];
-					break;
+				case 'left': locationOrder = [ 'left', 'right', 'left' ]; break;
+				case 'right': locationOrder = [ 'right', 'left', 'right' ]; break;
+				case 'down': locationOrder = [ 'down', 'up', 'down' ]; break;
+				default: locationOrder = [ 'up', 'down', 'up' ];
 			}
 
 			do {
@@ -445,4 +437,4 @@ mw.flow.ui.enhance = {};
 			.on( 'mouseenter.mw-ui-enhance focus.mw-ui-enhance', '.flow-ui-tooltip-target', onMwUiTooltipFocus )
 			.on( 'mouseleave.mw-ui-enhance blur.mw-ui-enhance click.mw-ui-enhance', '.flow-ui-tooltip-target', onMwUiTooltipBlur );
 	} );
-}() );
+}( mw, jQuery ) );

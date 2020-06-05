@@ -3,7 +3,7 @@
  * @todo Clean up the remaining code that may not need to be here.
  */
 
-( function () {
+( function ( $, mw ) {
 	/**
 	 * Constructor class for instantiating a new Flow board.
 	 *
@@ -78,7 +78,7 @@
 
 		// Trigger this on FlowBoardAndHistoryComponentBase
 		// @todo use EventEmitter to do this?
-		$retObj = FlowBoardComponent.super.prototype.reinitializeContainer.call( this, $container );
+		$retObj = FlowBoardComponent.parent.prototype.reinitializeContainer.call( this, $container );
 		// Find any new (or previous) elements
 		$header = $container.find( '.flow-board-header' ).addBack().filter( '.flow-board-header:first' );
 		$boardNavigation = $container.find( '.flow-board-navigation' ).addBack().filter( '.flow-board-navigation:first' );
@@ -175,7 +175,6 @@
 		var _notify = mw.notify;
 		mw.notify = function ( message, options ) {
 			// override message when we've just watched the board
-			// eslint-disable-next-line no-jquery/no-global-selector
 			if ( options && options.tag === 'watch-self' && $( '#ca-watch' ).length ) {
 				// Render a div telling the user that they have subscribed
 				message = $( mw.flow.TemplateEngine.processTemplateGetFragment(
@@ -190,4 +189,4 @@
 			return _notify.apply( this, arguments );
 		};
 	}
-}() );
+}( jQuery, mediaWiki ) );

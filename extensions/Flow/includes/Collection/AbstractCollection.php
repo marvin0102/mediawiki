@@ -75,8 +75,7 @@ abstract class AbstractCollection {
 	 * (post ID, header ID, etc.)
 	 *
 	 * @param UUID $uuid
-	 * @return static
-	 * @suppress PhanTypeInstantiateAbstract Phan is right, though
+	 * @return AbstractCollection
 	 */
 	public static function newFromId( UUID $uuid ) {
 		return new static( $uuid );
@@ -249,7 +248,7 @@ abstract class AbstractCollection {
 		if ( !$this->workflow ) {
 			$uuid = $this->getWorkflowId();
 
-			$this->workflow = self::getStorage( Workflow::class )->get( $uuid );
+			$this->workflow = self::getStorage( 'Flow\\Model\\Workflow' )->get( $uuid );
 			if ( !$this->workflow ) {
 				throw new InvalidDataException( 'Invalid workflow: ' . $uuid->getAlphadecimal(), 'invalid-workflow' );
 			}
@@ -259,6 +258,6 @@ abstract class AbstractCollection {
 	}
 
 	public function getBoardWorkflow() {
-		return self::getStorage( Workflow::class )->get( $this->getBoardWorkflowId() );
+		return self::getStorage( 'Flow\\Model\\Workflow' )->get( $this->getBoardWorkflowId() );
 	}
 }

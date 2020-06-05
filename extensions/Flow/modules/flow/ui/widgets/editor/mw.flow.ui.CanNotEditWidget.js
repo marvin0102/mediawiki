@@ -1,4 +1,4 @@
-( function () {
+( function ( mw, $ ) {
 	// Should be refined later to handle different scenarios (block/protect/etc.) explicitly.
 	/**
 	 * Flow error widget for when the user can not edit/post/etc.
@@ -39,7 +39,7 @@
 		this.label = new OO.ui.LabelWidget();
 
 		// Parent constructor
-		mw.flow.ui.CanNotEditWidget.super.call( this, config );
+		mw.flow.ui.CanNotEditWidget.parent.call( this, config );
 
 		// Initialize
 		this.$element
@@ -149,9 +149,8 @@
 	 * @return {boolean} The group is both required to edit and missing
 	 */
 	mw.flow.ui.CanNotEditWidget.prototype.isMissingRequiredGroup = function ( groupName ) {
-		var isGroupRequired = this.restrictionEdit.indexOf( groupName ) !== -1,
-			userGroups = this.userGroups,
-			acceptableGroups;
+		var isGroupRequired = $.inArray( groupName, this.restrictionEdit ) !== -1,
+			acceptableGroups, i;
 
 		if ( isGroupRequired ) {
 			acceptableGroups = [ groupName ];
@@ -162,11 +161,15 @@
 				acceptableGroups.push( 'confirmed' );
 			}
 
-			return acceptableGroups.every( function ( group ) {
-				return userGroups.indexOf( group ) === -1;
-			} );
+			for ( i = 0; i < acceptableGroups.length; i++ ) {
+				if ( $.inArray( acceptableGroups[ i ], this.userGroups ) !== -1 ) {
+					return false;
+				}
+			}
+
+			return true;
 		} else {
 			return false;
 		}
 	};
-}() );
+}( mediaWiki, jQuery ) );

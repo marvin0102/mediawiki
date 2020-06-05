@@ -45,7 +45,6 @@ class ChangesListQuery extends AbstractQuery {
 	/**
 	 * @param \stdClass[] $rows List of recentchange database rows
 	 * @param bool $isWatchlist
-	 * @suppress PhanParamSignatureMismatch The signature doesn't match, though
 	 */
 	public function loadMetadataBatch( $rows, $isWatchlist = false ) {
 		$needed = [];
@@ -93,7 +92,7 @@ class ChangesListQuery extends AbstractQuery {
 		} elseif ( $count === 1 ) {
 			$results = reset( $found );
 		} else {
-			$results = array_merge( ...array_values( $found ) );
+			$results = call_user_func_array( 'array_merge', $found );
 		}
 
 		if ( $results ) {

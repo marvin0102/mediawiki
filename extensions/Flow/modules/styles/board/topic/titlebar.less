@@ -10,15 +10,19 @@
 	border-radius: @borderRadius;
 	outline: 0;
 
+	// use child selector to block IE 6
 	.flow-menu {
-		top: 2.5em;
+		top: 2em;
 	}
 
 	.flow-topic-titlebar-container,
-	.flow-edit-title-form {
+	.flow-edit-title-form,
+	.flow-topic-summary,
+	.flow-ui-editTopicSummaryWidget {
+
 		.mw-content-ltr & {
 			/* @noflip */
-			padding-right: @topicIndent + 2em;
+			padding-right: @topicIndent + 1;
 			/* @noflip */
 			padding-left: @topicIndent;
 		}
@@ -27,19 +31,13 @@
 			/* @noflip */
 			padding-right: @topicIndent;
 			/* @noflip */
-			padding-left: @topicIndent + 2em;
+			padding-left: @topicIndent + 1;
 		}
-	}
-
-	.flow-topic-summary,
-	.flow-ui-editTopicSummaryWidget {
-		padding-left: @topicIndent;
-		padding-right: @topicIndent;
 	}
 }
 
-// Use extra specificity to override `.mw-body-content h2` from Vector.
-.mw-body .flow-topic-title {
+// needs extra specificity to override `div#content h2` from vector
+div#content .flow-topic-title { /* stylelint-disable-line selector-max-id */
 	padding: 0;
 	border-bottom: 0;
 	font-family: sans-serif;
@@ -47,49 +45,39 @@
 	word-break: break-word;
 	word-wrap: break-word;
 	overflow: visible;
-
-	.mw-ui-icon {
-		vertical-align: bottom;
-	}
 }
 
-// Correct positioning for ltr/rtl content direction.
-.mw-body .mw-content-ltr .flow-topic-title {
+// Correct positioning for ltr/rtl content direction
+/* stylelint-disable selector-max-id */
+div#content .mw-content-ltr .flow-topic-title {
 	/* @noflip */
 	margin: 0 2.5em 0.15em 0;
 
-	.mw-ui-icon {
-		// HACK: Move check icon a bit to the left so it's better aligned with the text below it.
+	.mw-ui-icon.mw-ui-icon-before:before {
 		/* @noflip */
-		margin-left: -0.33em;
+		float: left;
 
-		&.mw-ui-icon-before:before {
-			/* @noflip */
-			float: left;
-			/* @noflip */
-			margin-right: 0;
-		}
+		// HACK: move check icon a bit to the left so it appears to align better with the text below it
+		/* @noflip */
+		margin-left: -0.25em;
 	}
 }
 
-// Correct positioning for ltr/rtl content direction.
-.mw-body .mw-content-rtl .flow-topic-title {
+// Correct positioning for ltr/rtl content direction
+div#content .mw-content-rtl .flow-topic-title {
 	/* @noflip */
 	margin: 0 0 0.15em 2.5em;
 
-	.mw-ui-icon {
-		// HACK: Move check icon a bit to the right so it's better aligned with the text below it.
+	.mw-ui-icon.mw-ui-icon-before:before {
 		/* @noflip */
-		margin-right: -0.33em;
+		float: right;
 
-		&.mw-ui-icon-before:before {
-			/* @noflip */
-			float: right;
-			/* @noflip */
-			margin-left: 0;
-		}
+		// HACK: move check icon a bit to the right so it appears to align better with the text below it
+		/* @noflip */
+		margin-right: -0.25em;
 	}
 }
+/* stylelint-enable selector-max-id */
 
 .flow-moderated-topic-title {
 	margin-bottom: 0.33em;
@@ -97,8 +85,8 @@
 	font-weight: bold;
 }
 
-// Override default Vector heading styles.
-.mw-body h2.flow-topic-title {
+// Override default Vector heading styles
+div#content h2.flow-topic-title { /* stylelint-disable-line selector-max-id */
 	font-size: 1.5em;
 }
 
@@ -123,7 +111,6 @@
 		}
 	}
 }
-
 .flow-notification-tooltip-title {
 	font-size: 1em;
 }

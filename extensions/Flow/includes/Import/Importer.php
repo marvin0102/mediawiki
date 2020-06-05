@@ -8,7 +8,7 @@ use Flow\Data\ManagerGroup;
 use Flow\DbFactory;
 use Flow\Import\Postprocessor\Postprocessor;
 use Flow\Import\Postprocessor\ProcessorGroup;
-use Flow\Import\SourceStore\SourceStoreInterface;
+use Flow\Import\SourceStore\SourceStoreInterface as ImportSourceStore;
 use Flow\Import\SourceStore\Exception as ImportSourceStoreException;
 use Flow\Model\AbstractRevision;
 use Flow\Model\Header;
@@ -25,9 +25,9 @@ use MWTimestamp;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use ReflectionProperty;
-use RuntimeException;
 use SplQueue;
 use Title;
+use UIDGenerator;
 use User;
 
 /**
@@ -106,15 +106,10 @@ class Importer {
 	 * @param User $user User doing the conversion actions (e.g. initial description,
 	 *    wikitext archive edit).  However, actions will be attributed to the original
 	 *    user when possible (e.g. the user who did the original LQT reply)
-	 * @param SourceStoreInterface $sourceStore
+	 * @param ImportSourceStore $sourceStore
 	 * @return bool True When the import completes with no failures
 	 */
-	public function import(
-		IImportSource $source,
-		Title $targetPage,
-		User $user,
-		SourceStoreInterface $sourceStore
-	) {
+	public function import( IImportSource $source, Title $targetPage, User $user, ImportSourceStore $sourceStore ) {
 		$operation = new TalkpageImportOperation( $source, $user, $this->occupationController );
 		$pageImportState = new PageImportState(
 			$this->workflowLoaderFactory
@@ -143,46 +138,31 @@ class Importer {
  * the database and re-try importing that item with another generated
  * uid.
  */
-class HistoricalUIDGenerator {
-	const COUNTER_MAX = 1023; // 2^10 - 1
-
+class HistoricalUIDGenerator extends UIDGenerator {
 	public static function historicalTimestampedUID88( $timestamp, $base = 10 ) {
+		$COUNTER_MAX = 1023; // 2^10 - 1
+
 		static $counter = false;
 		if ( $counter === false ) {
-			$counter = mt_rand( 0, self::COUNTER_MAX );
+			$counter = mt_rand( 0, $COUNTER_MAX );
 		}
 
-		// (seconds, milliseconds)
-		$time = [ wfTimestamp( TS_UNIX, $timestamp ), mt_rand( 0, 999 ) ];
-		++$counter;
+		$time = [
+			// seconds
+			wfTimestamp( TS_UNIX, $timestamp ),
+			// milliseconds
+			mt_rand( 0, 999 )
+		];
 
-		// Take the 46 LSBs of "milliseconds since epoch"
-		$id_bin = self::millisecondsSinceEpochBinary( $time );
-		// Add a 10 bit counter resulting in 56 bits total
-		$id_bin .= str_pad( decbin( $counter % ( self::COUNTER_MAX + 1 ) ), 10, '0', STR_PAD_LEFT );
-		// Add the 32 bit node ID resulting in 88 bits total
-		$id_bin .= self::newNodeId();
-		if ( strlen( $id_bin ) !== 88 ) {
-			throw new RuntimeException( "Detected overflow for millisecond timestamp." );
-		}
+		// The UIDGenerator is implemented very specifically to have
+		// a single instance, we have to reuse that instance.
+		$gen = self::singleton();
+		self::rotateNodeId( $gen );
+		$binaryUUID = $gen->getTimestampedID88(
+			[ $time, ++$counter % ( $COUNTER_MAX + 1 ) ]
+		);
 
-		return \Wikimedia\base_convert( $id_bin, 2, $base );
-	}
-
-	/**
-	 * @param array $time Array of second and millisecond integers
-	 * @return string 46 LSBs of "milliseconds since epoch" in binary (rolls over in 4201)
-	 * @throws RuntimeException
-	 */
-	protected static function millisecondsSinceEpochBinary( array $time ) {
-		list( $sec, $msec ) = $time;
-		$ts = 1000 * $sec + $msec;
-		if ( $ts > 2 ** 52 ) {
-			throw new RuntimeException( __METHOD__ .
-				': sorry, this function doesn\'t work after the year 144680' );
-		}
-
-		return substr( \Wikimedia\base_convert( $ts, 10, 2, 46 ), -46 );
+		return \Wikimedia\base_convert( $binaryUUID, 2, $base );
 	}
 
 	/**
@@ -191,12 +171,13 @@ class HistoricalUIDGenerator {
 	 * creation of historical uid's with one or a smaller number of
 	 * machines requires use of a random node id.
 	 *
-	 * @return string String of 32 binary digits
+	 * @param UIDGenerator $gen
 	 */
-	protected static function newNodeId() {
+	protected static function rotateNodeId( UIDGenerator $gen ) {
 		// 4 bytes = 32 bits
-
-		return \Wikimedia\base_convert( MWCryptRand::generateHex( 8 ), 16, 2, 32 );
+		$gen->nodeId32 = \Wikimedia\base_convert( MWCryptRand::generateHex( 8, true ), 16, 2, 32 );
+		// 6 bytes = 48 bits, used for 128bit uid's
+		// $gen->nodeId48 = \Wikimedia\base_convert( MWCryptRand::generateHex( 12, true ), 16, 2, 48 );
 	}
 }
 
@@ -222,17 +203,17 @@ class PageImportState {
 	protected $workflowIdProperty;
 
 	/**
-	 * @var ReflectionProperty
+	 * @var ReflectionProperty[]
 	 */
 	protected $postIdProperty;
 
 	/**
-	 * @var ReflectionProperty
+	 * @var ReflectionProperty[]
 	 */
 	protected $revIdProperty;
 
 	/**
-	 * @var ReflectionProperty
+	 * @var ReflectionProperty[]
 	 */
 	protected $lastEditIdProperty;
 
@@ -251,20 +232,10 @@ class PageImportState {
 	 */
 	protected $deferredQueue;
 
-	/**
-	 * @var SourceStoreInterface
-	 */
-	private $sourceStore;
-
-	/**
-	 * @var \Wikimedia\Rdbms\IMaintainableDatabase
-	 */
-	private $dbw;
-
 	public function __construct(
 		Workflow $boardWorkflow,
 		ManagerGroup $storage,
-		SourceStoreInterface $sourceStore,
+		ImportSourceStore $sourceStore,
 		LoggerInterface $logger,
 		DbFactory $dbFactory,
 		Postprocessor $postprocessor,
@@ -281,15 +252,15 @@ class PageImportState {
 		$this->allowUnknownUsernames = $allowUnknownUsernames;
 
 		// Get our workflow UUID property
-		$this->workflowIdProperty = new ReflectionProperty( Workflow::class, 'id' );
+		$this->workflowIdProperty = new ReflectionProperty( 'Flow\\Model\\Workflow', 'id' );
 		$this->workflowIdProperty->setAccessible( true );
 
 		// Get our revision UUID properties
-		$this->postIdProperty = new ReflectionProperty( PostRevision::class, 'postId' );
+		$this->postIdProperty = new ReflectionProperty( 'Flow\\Model\\PostRevision', 'postId' );
 		$this->postIdProperty->setAccessible( true );
-		$this->revIdProperty = new ReflectionProperty( AbstractRevision::class, 'revId' );
+		$this->revIdProperty = new ReflectionProperty( 'Flow\\Model\\AbstractRevision', 'revId' );
 		$this->revIdProperty->setAccessible( true );
-		$this->lastEditIdProperty = new ReflectionProperty( AbstractRevision::class, 'lastEditId' );
+		$this->lastEditIdProperty = new ReflectionProperty( 'Flow\\Model\\AbstractRevision', 'lastEditId' );
 		$this->lastEditIdProperty->setAccessible( true );
 	}
 
@@ -348,7 +319,7 @@ class PageImportState {
 			[ 'sort' => 'rev_id', 'order' => 'DESC', 'limit' => 1 ]
 		);
 
-		if ( is_array( $result ) && count( $result ) ) {
+		if ( count( $result ) ) {
 			return reset( $result );
 		} else {
 			return false;
@@ -386,9 +357,7 @@ class PageImportState {
 		// We don't set the topic title postId as it was inherited from the workflow.  We only set the
 		// postId for first revisions because further revisions inherit it from the parent which was
 		// set appropriately.
-		if ( $revision instanceof PostRevision &&
-			$revision->isFirstRevision() && !$revision->isTopicTitle()
-		) {
+		if ( $revision instanceof PostRevision && $revision->isFirstRevision() && !$revision->isTopicTitle() ) {
 			$this->postIdProperty->setValue( $revision, $uid );
 		}
 
@@ -488,11 +457,6 @@ class TopicImportState {
 	 */
 	protected $lastUpdated;
 
-	/**
-	 * @var ReflectionProperty
-	 */
-	private $workflowUpdatedProperty;
-
 	public function __construct(
 		PageImportState $parent,
 		Workflow $topicWorkflow,
@@ -502,7 +466,7 @@ class TopicImportState {
 		$this->topicWorkflow = $topicWorkflow;
 		$this->topicTitle = $topicTitle;
 
-		$this->workflowUpdatedProperty = new ReflectionProperty( Workflow::class, 'lastUpdated' );
+		$this->workflowUpdatedProperty = new ReflectionProperty( 'Flow\\Model\\Workflow', 'lastUpdated' );
 		$this->workflowUpdatedProperty->setAccessible( true );
 
 		$this->lastUpdated = '';
@@ -566,11 +530,7 @@ class TalkpageImportOperation {
 	 *   'original' user
 	 * @param OccupationController $occupationController
 	 */
-	public function __construct(
-		IImportSource $source,
-		User $user,
-		OccupationController $occupationController
-	) {
+	public function __construct( IImportSource $source, User $user, OccupationController $occupationController ) {
 		$this->importSource = $source;
 		$this->user = $user;
 		$this->occupationController = $occupationController;
@@ -595,8 +555,7 @@ class TalkpageImportOperation {
 				/* $mustNotExist = */ true
 			);
 			if ( !$creationStatus->isGood() ) {
-				throw new ImportException( "safeAllowCreation failed to allow the import " .
-					"destination, with the following error:\n" . $creationStatus->getWikiText() );
+				throw new ImportException( "safeAllowCreation failed to allow the import destination, with the following error:\n" . $creationStatus->getWikiText() );
 			}
 
 			// Makes sure the page exists and a Flow-specific revision has been inserted
@@ -604,18 +563,15 @@ class TalkpageImportOperation {
 				new Article( $destinationTitle ),
 				$state->boardWorkflow
 			);
-			$state->logger->debug( 'ensureFlowRevision status isOK: ' .
-				var_export( $status->isOK(), true ) );
-			$state->logger->debug( 'ensureFlowRevision status isGood: ' .
-				var_export( $status->isGood(), true ) );
+			$state->logger->debug( 'ensureFlowRevision status isOK: ' . var_export( $status->isOK(), true ) );
+			$state->logger->debug( 'ensureFlowRevision status isGood: ' . var_export( $status->isGood(), true ) );
 
 			if ( $status->isOK() ) {
 				$ensureValue = $status->getValue();
 				$revision = $ensureValue['revision'];
-				$state->logger->debug( 'ensureFlowRevision already-existed: ' .
-					var_export( $ensureValue['already-existed'], true ) );
+				$state->logger->debug( 'ensureFlowRevision already-existed: ' . var_export( $ensureValue['already-existed'], true ) );
 				$revisionId = $revision->getId();
-				$pageId = $revision->getTitle()->getArticleID( Title::GAID_FOR_UPDATE );
+				$pageId = $revision->getTitle()->getArticleId( Title::GAID_FOR_UPDATE );
 				$state->logger->debug( "ensureFlowRevision revision ID: $revisionId, page ID: $pageId" );
 
 				$state->put( $state->boardWorkflow, [] );
@@ -756,8 +712,7 @@ class TalkpageImportOperation {
 		// Check if it's already been imported
 		$topicState = $this->getExistingTopicState( $state, $importTopic );
 		if ( $topicState ) {
-			$state->logger->info( 'Continuing import to ' .
-				$topicState->topicWorkflow->getArticleTitle()->getPrefixedText() );
+			$state->logger->info( 'Continuing import to ' . $topicState->topicWorkflow->getArticleTitle()->getPrefixedText() );
 			return $topicState;
 		} else {
 			return $this->createTopicState( $state, $importTopic );
@@ -805,7 +760,6 @@ class TalkpageImportOperation {
 			$topicWorkflow->getArticleTitle()
 		);
 
-		// @phan-suppress-next-line PhanTypeMismatchArgument
 		$topicState = new TopicImportState( $state, $topicWorkflow, end( $titleRevisions ) );
 		$topicMetadata = $topicState->getMetadata();
 
@@ -821,8 +775,7 @@ class TalkpageImportOperation {
 
 		$state->recordAssociation( $topicWorkflow->getId(), $importTopic );
 
-		$state->logger->info( 'Finished importing topic title with ' .
-			count( $titleRevisions ) . ' revisions' );
+		$state->logger->info( 'Finished importing topic title with ' . count( $titleRevisions ) . ' revisions' );
 		return $topicState;
 	}
 
@@ -887,8 +840,7 @@ class TalkpageImportOperation {
 		);
 
 		$state->recordUpdateTime( end( $revisions )->getRevisionId() );
-		$state->parent->logger->info( "Finished importing summary with " .
-			count( $revisions ) . " revisions" );
+		$state->parent->logger->info( "Finished importing summary with " . count( $revisions ) . " revisions" );
 	}
 
 	/**
@@ -896,7 +848,6 @@ class TalkpageImportOperation {
 	 * @param IImportPost $post
 	 * @param PostRevision $replyTo
 	 * @param string $logPrefix
-	 * @suppress PhanTypeMismatchArgument,PhanUndeclaredMethod
 	 */
 	public function importPost(
 		TopicImportState $state,
@@ -943,8 +894,7 @@ class TalkpageImportOperation {
 				$topRevision->getPostId(),
 				$post
 			);
-			$state->parent->logger->info( $logPrefix . "Finished importing post with " .
-				count( $replyRevisions ) . " revisions" );
+			$state->parent->logger->info( $logPrefix . "Finished importing post with " . count( $replyRevisions ) . " revisions" );
 			$state->parent->postprocessor->afterPostImported( $state, $post, $topRevision );
 		}
 
@@ -959,8 +909,7 @@ class TalkpageImportOperation {
 	 * Imports an object with all its revisions
 	 *
 	 * @param IRevisionableObject $object Object to import.
-	 * @param callable $importFirstRevision Function which, given the appropriate import revision,
-	 *   creates the Flow revision.
+	 * @param callable $importFirstRevision Function which, given the appropriate import revision, creates the Flow revision.
 	 * @param string $editChangeType The Flow change type (from FlowActions.php) for each new operation.
 	 * @param PageImportState $state State of the import operation.
 	 * @param Title $title Title content is rendered against

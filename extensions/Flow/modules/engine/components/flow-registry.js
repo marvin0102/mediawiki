@@ -7,7 +7,7 @@
  * 4. Have the ability to fetch individual prototype methods from classes in the registry, as they are out of scope.
  */
 
-( function () {
+( function ( $, mw ) {
 	var _componentRegistry = new OO.Registry();
 
 	/** @class mw.flow */
@@ -32,13 +32,13 @@
 		 */
 		function _RecursiveConstructor() {
 			var constructors = [],
-				parent = this.constructor.super,
+				parent = this.constructor.parent,
 				i, j, parentReturn;
 
 			// Find each parent class
 			while ( parent ) {
 				constructors.push( parent );
-				parent = parent.super;
+				parent = parent.parent;
 			}
 
 			// Call each parent in reverse (starting with the base class and moving up the chain)
@@ -133,16 +133,16 @@
 
 		if ( !registeredClass ) {
 			mw.flow.debug( 'Failed to find FlowComponent.', arguments );
-			return function () {};
+			return $.noop;
 		}
 
 		method = registeredClass.prototype[ methodName ];
 		if ( !method ) {
 			mw.flow.debug( 'Failed to find FlowComponent method.', arguments );
-			return function () {};
+			return $.noop;
 		}
 
-		return method.bind( context || registeredClass );
+		return $.proxy( method, context || registeredClass );
 	}
 	mw.flow.getPrototypeMethod = getFlowPrototypeMethod;
 
@@ -167,4 +167,4 @@
 		}
 	}
 	mw.flow.mixinComponent = mixinFlowComponent;
-}() );
+}( jQuery, mediaWiki ) );

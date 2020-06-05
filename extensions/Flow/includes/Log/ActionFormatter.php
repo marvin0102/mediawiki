@@ -8,7 +8,6 @@ use Flow\Data\ManagerGroup;
 use Flow\Model\UUID;
 use Flow\Conversion\Utils;
 use Flow\Repository\TreeRepository;
-use Flow\RevisionActionPermissions;
 use Flow\Templating;
 use Flow\UrlGenerator;
 
@@ -133,7 +132,7 @@ class ActionFormatter extends LogFormatter {
 		if ( $isTopicTitleVisible ) {
 			$message->params( [
 				$title, // Title of topic
-				$title->getFullURL(), // Full URL of topic, with highlighted post if applicable
+				$title->getFullUrl(), // Full URL of topic, with highlighted post if applicable
 			] );
 
 			$message->plaintextParams( $this->templating->getContent( $rootLastRevision, 'topic-title-plaintext' ) );

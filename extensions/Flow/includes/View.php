@@ -5,7 +5,6 @@ namespace Flow;
 use Article;
 use ContextSource;
 use Flow\Block\AbstractBlock;
-use Flow\Block\Block;
 use Flow\Block\TopicBlock;
 use Flow\Exception\InvalidActionException;
 use Flow\Model\Anchor;
@@ -15,7 +14,6 @@ use Flow\Model\Workflow;
 use Html;
 use Hooks;
 use IContextSource;
-use MediaWiki\MediaWikiServices;
 use Message;
 use OutputPage;
 use Title;
@@ -36,7 +34,7 @@ class View extends ContextSource {
 	 */
 	protected $actions;
 
-	public function __construct(
+	function __construct(
 		UrlGenerator $urlGenerator,
 		TemplateHelper $lightncandy,
 		IContextSource $requestContext,
@@ -60,7 +58,7 @@ class View extends ContextSource {
 			$retval = $this->handleSubmit( $loader, $action, $parameters );
 			// successful submission
 			if ( $retval === true ) {
-				$this->redirect( $loader->getWorkflow() );
+				$this->redirect( $loader->getWorkflow(), 'view' );
 				return;
 			// only render the returned subset of blocks
 			} elseif ( is_array( $retval ) ) {
@@ -79,23 +77,11 @@ class View extends ContextSource {
 			$block->setPageTitle( $output );
 		}
 
-		if ( $this->actions->getValue( $action, 'hasUserGeneratedContent' ) ) {
-			$output->setCopyright( true );
-		}
-
 		$robotPolicy = $this->getRobotPolicy( $action, $loader->getWorkflow(), $blocks );
-		// @phan-suppress-next-line SecurityCheck-DoubleEscaped
 		$this->renderApiResponse( $apiResponse, $robotPolicy );
 	}
 
-	/**
-	 * @param string $action
-	 * @param Workflow $workflow
-	 * @param Block[] $blocks
-	 *
-	 * @return string[]
-	 */
-	private function getRobotPolicy( $action, Workflow $workflow, array $blocks ) {
+	private function getRobotPolicy( $action, $workflow, $blocks ) {
 		if ( $action !== 'view' ) {
 			// consistent with 'edit' and other action pages in Core
 			return [
@@ -107,7 +93,6 @@ class View extends ContextSource {
 		if ( $workflow->getType() === 'topic' ) {
 			/** @var TopicBlock $topic */
 			$topic = $blocks[ 'topic' ];
-			// @phan-suppress-next-line PhanUndeclaredMethod Cannot infer type
 			$topicRev = $topic->loadTopicTitle();
 			if ( !$topicRev || $topicRev->isHidden() ) {
 				return [
@@ -198,10 +183,7 @@ class View extends ContextSource {
 				'name' => $value,
 				'exists' => $categoryTitle->exists()
 			];
-			$linkedCategories[] = MediaWikiServices::getInstance()->getLinkRenderer()->makeLink(
-				$categoryTitle,
-				$categoryTitle->getText()
-			);
+			$linkedCategories[] = \Linker::link( $categoryTitle, htmlspecialchars( $categoryTitle->getText() ) );
 		}
 
 		// @todo This and API should use same code
@@ -218,10 +200,10 @@ class View extends ContextSource {
 			'watchable' => !$user->isAnon(),
 			'links' => [
 				'watch-board' => [
-					'url' => $title->getLocalURL( 'action=watch' ),
+					'url' => $title->getLocalUrl( 'action=watch' ),
 				],
 				'unwatch-board' => [
-					'url' => $title->getLocalURL( 'action=unwatch' ),
+					'url' => $title->getLocalUrl( 'action=unwatch' ),
 				],
 			]
 		];
@@ -248,10 +230,10 @@ class View extends ContextSource {
 		// Add category items to the header if they exist
 		if ( count( $linkedCategories ) > 0 && isset( $apiResponse['blocks']['header'] ) ) {
 			$apiResponse['blocks']['header']['categories'] = [
-				'link' => MediaWikiServices::getInstance()->getLinkRenderer()->makeLink(
+				'link' => \Linker::link(
 						\SpecialPage::getTitleFor( 'Categories' ),
-						$this->msg( 'pagecategories' )->params( count( $linkedCategories ) )->text()
-					) . $this->msg( 'colon-separator' )->escaped(),
+						wfMessage( 'pagecategories' )->params( count( $linkedCategories ) )->text()
+					) . wfMessage( 'colon-separator' )->text(),
 				'items' => $linkedCategories
 			];
 		}
@@ -295,7 +277,6 @@ class View extends ContextSource {
 		}
 
 		$out = $this->getOutput();
-		$config = $this->getConfig();
 
 		$jsonBlobResponse = $apiResponse;
 
@@ -308,8 +289,6 @@ class View extends ContextSource {
 
 		// Add JSON blob for OOUI widgets
 		$out->addJsConfigVars( 'wgFlowData', $jsonBlobResponse );
-		$out->addJsConfigVars( 'wgEditSubmitButtonLabelPublish',
-			$config->get( 'EditSubmitButtonLabelPublish' ) );
 
 		$renderedBlocks = [];
 		foreach ( $apiResponse['blocks'] as $block ) {
@@ -375,6 +354,7 @@ class View extends ContextSource {
 				],
 				$template( $apiResponse )
 			) );
+
 			$out->setIndexPolicy( $robotPolicy[ 'index' ] );
 			$out->setFollowPolicy( $robotPolicy[ 'follow' ] );
 		}

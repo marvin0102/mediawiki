@@ -3,7 +3,7 @@
  * Implements mw.Modal functionality.
  */
 
-( function () {
+( function ( mw, $ ) {
 	// Make it easier to remove this later on, should it be implemented in Core
 	if ( mw.Modal ) {
 		return;
@@ -171,7 +171,7 @@
 					$fields.trigger( 'focus' );
 				} else {
 					// Give focus to the wrapper itself
-					$node.trigger( 'focus' );
+					$node.focus();
 				}
 			}
 		}
@@ -179,6 +179,7 @@
 		return this;
 	};
 
+	// eslint-disable-next-line valid-jsdoc
 	/**
 	 * Changes the title of the modal.
 	 *
@@ -396,11 +397,11 @@
 		}
 
 		// No node given; return the last-opened modal on the page
-		return $( document.body ).children( MwUiModal.prototype.wrapperSelector ).filter( ':last' ).data( 'MwUiModal' ) || false;
+		return $( 'body' ).children( MwUiModal.prototype.wrapperSelector ).filter( ':last' ).data( 'MwUiModal' ) || false;
 	};
 
 	// Transforms: automatically map these functions to call their mw.Modal methods globally, on any active instance
-	[ 'close', 'getName', 'prev', 'next', 'prevOrClose', 'nextOrSubmit', 'go' ].forEach( function ( fn ) {
+	$.each( [ 'close', 'getName', 'prev', 'next', 'prevOrClose', 'nextOrSubmit', 'go' ], function ( i, fn ) {
 		mw.Modal[ fn ] = function () {
 			var args = Array.prototype.splice.call( arguments, 0, arguments.length - 1 ),
 				node = arguments[ arguments.length - 1 ],
@@ -422,4 +423,4 @@
 			}
 		};
 	} );
-}() );
+}( mw, jQuery ) );

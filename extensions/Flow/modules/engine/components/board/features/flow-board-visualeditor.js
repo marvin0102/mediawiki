@@ -2,7 +2,7 @@
  * Expose some functionality on the board object that is needed for VisualEditor.
  */
 
-( function () {
+( function ( $, mw, OO ) {
 	/**
 	 * FlowBoardComponentVisualEditorFeatureMixin
 	 *
@@ -25,8 +25,8 @@
 			duplicatedArray;
 
 		// Could use a data attribute to avoid trim.
-		duplicatedArray = $topic.find( '.flow-author .mw-userlink' ).get().map( function ( el ) {
-			return $( el ).text().trim();
+		duplicatedArray = $.map( $topic.find( '.flow-author .mw-userlink' ).get(), function ( el ) {
+			return $.trim( $( el ).text() );
 		} );
 		return OO.unique( duplicatedArray );
 	}
@@ -34,4 +34,4 @@
 	FlowBoardComponentVisualEditorFeatureMixin.prototype.getTopicPosters = flowVisualEditorGetTopicPosters;
 
 	mw.flow.mixinComponent( 'board', FlowBoardComponentVisualEditorFeatureMixin );
-}() );
+}( jQuery, mediaWiki, OO ) );

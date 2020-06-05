@@ -5,16 +5,14 @@ namespace Flow\Tests\Data;
 use Flow\Tests\FlowTestCase;
 
 /**
- * @covers \Flow\Data\ObjectLocator
- *
  * @group Flow
  */
 class ObjectLocatorTest extends FlowTestCase {
 
 	public function testUselessTest() {
-		$mapper = $this->getMock( \Flow\Data\ObjectMapper::class );
-		$storage = $this->getMock( \Flow\Data\ObjectStorage::class );
-		$dbFactory = $this->getMock( \Flow\DbFactory::class );
+		$mapper = $this->getMock( 'Flow\Data\ObjectMapper' );
+		$storage = $this->getMock( 'Flow\Data\ObjectStorage' );
+		$dbFactory = $this->getMock( 'Flow\DbFactory' );
 
 		$locator = new \Flow\Data\ObjectLocator( $mapper, $storage, $dbFactory );
 

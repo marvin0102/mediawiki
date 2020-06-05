@@ -27,7 +27,7 @@ class FlowFixWorkflowLastUpdateTimestamp extends Maintenance {
 	public function __construct() {
 		parent::__construct();
 
-		$this->addDescription( 'Fixes any incorrect workflow_last_update_timestamp for topics' );
+		$this->mDescription = 'Fixes any incorrect workflow_last_update_timestamp for topics';
 
 		$this->setBatchSize( 10 );
 
@@ -61,7 +61,7 @@ class FlowFixWorkflowLastUpdateTimestamp extends Maintenance {
 	 * a Closure.
 	 *
 	 * @param string $out
-	 * @param mixed|null $channel
+	 * @param mixed $channel
 	 */
 	public function output( $out, $channel = null ) {
 		parent::output( $out, $channel );
@@ -92,7 +92,7 @@ class UpdateWorkflowLastUpdateTimestampGenerator implements RowUpdateGenerator {
 	 * @param stdClass $row
 	 * @return array
 	 * @throws TimestampException
-	 * @throws FlowException
+	 * @throws \Flow\Exception\FlowException
 	 * @throws \Flow\Exception\InvalidInputException
 	 */
 	public function update( $row ) {
@@ -194,7 +194,7 @@ class UpdateWorkflowLastUpdateTimestampWriter extends BatchRowWriter {
 		);
 
 		/** @var UUID[] $uuids */
-		$uuids = array_map( [ UUID::class, 'create' ], array_keys( $timestamps ) );
+		$uuids = array_map( [ 'Flow\\Model\\UUID', 'create' ], array_keys( $timestamps ) );
 
 		/** @var Workflow[] $workflows */
 		$workflows = $this->storage->getMulti( 'Workflow', $uuids );
@@ -225,5 +225,5 @@ class UpdateWorkflowLastUpdateTimestampWriter extends BatchRowWriter {
 	}
 }
 
-$maintClass = FlowFixWorkflowLastUpdateTimestamp::class;
+$maintClass = 'FlowFixWorkflowLastUpdateTimestamp';
 require_once RUN_MAINTENANCE_IF_MAIN;

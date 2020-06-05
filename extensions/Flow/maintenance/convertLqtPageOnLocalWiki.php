@@ -2,7 +2,7 @@
 
 use Flow\Container;
 use Flow\Import\SourceStore\FileImportSourceStore;
-use Flow\Import\LiquidThreadsApi\ConversionStrategy;
+use Flow\Import\LiquidThreadsApi\ConversionStrategy as LiquidThreadsApiConversionStrategy;
 use Flow\Import\LiquidThreadsApi\LocalApiBackend;
 use Psr\Log\LogLevel;
 
@@ -17,7 +17,7 @@ require_once getenv( 'MW_INSTALL_PATH' ) !== false
 class ConvertLqtPageOnLocalWiki extends Maintenance {
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( "Converts LiquidThreads data to Flow data on the current wiki, using a ConversionStrategy" );
+		$this->mDescription = "Converts LiquidThreads data to Flow data on the current wiki, using a ConversionStrategy";
 		$this->addOption( 'srcpage', 'Page name of the source page to import from.', true, true );
 		$this->addOption( 'logfile', 'File to read and store associations between imported items and their sources', true, true );
 		$this->addOption( 'debug', 'Include debug information to progress report' );
@@ -25,6 +25,13 @@ class ConvertLqtPageOnLocalWiki extends Maintenance {
 	}
 
 	public function execute() {
+		$container = Container::getContainer();
+		// Workaround to try to help with memory problems (T108601).  The extend is
+		// so all uses of memcache.local_buffered pick up the same alternative.
+		$container->extend( 'memcache.local_buffered', function ( $mlb, $c ) {
+			return $c['memcache.non_local_buffered'];
+		} );
+
 		$talkPageManagerUser = \FlowHooks::getOccupationController()->getTalkpageManager();
 
 		$api = new LocalApiBackend( $talkPageManagerUser );
@@ -45,7 +52,7 @@ class ConvertLqtPageOnLocalWiki extends Maintenance {
 			$logger->setMaximumLevel( LogLevel::INFO );
 		}
 
-		$strategy = new ConversionStrategy(
+		$strategy = new LiquidThreadsApiConversionStrategy(
 			$dbw,
 			$sourceStore,
 			$api,
@@ -76,5 +83,5 @@ class ConvertLqtPageOnLocalWiki extends Maintenance {
 	}
 }
 
-$maintClass = ConvertLqtPageOnLocalWiki::class;
+$maintClass = "ConvertLqtPageOnLocalWiki";
 require_once RUN_MAINTENANCE_IF_MAIN;

@@ -1,4 +1,4 @@
-( function () {
+( function ( $ ) {
 	/**
 	 * Flow board description widget
 	 *
@@ -14,13 +14,12 @@
 	 * @cfg {Object} [editor] Config options to pass to mw.flow.ui.EditorWidget
 	 */
 	mw.flow.ui.BoardDescriptionWidget = function mwFlowUiBoardDescriptionWidget( boardModel, config ) {
-		var msgKey,
-			$content = $();
+		var $content = $();
 
 		config = config || {};
 
 		// Parent constructor
-		mw.flow.ui.BoardDescriptionWidget.super.call( this, config );
+		mw.flow.ui.BoardDescriptionWidget.parent.call( this, config );
 
 		this.board = boardModel;
 		this.attachModel( this.board.getDescription() );
@@ -44,21 +43,10 @@
 				currentRevision: this.model.getRevisionId()
 			}
 		);
-		if ( mw.config.get( 'wgEditSubmitButtonLabelPublish' ) ) {
-			msgKey = mw.user.isAnon() ?
-				'flow-edit-header-submit-anonymously-publish' :
-				'flow-edit-header-submit-publish';
-		} else {
-			msgKey = mw.user.isAnon() ?
-				'flow-edit-header-submit-anonymously' :
-				'flow-edit-header-submit';
-		}
 
-		this.id = 'edit-board-desc/' + mw.flow.system.boardId;
 		this.editor = new mw.flow.ui.EditorWidget( $.extend( {
-			saveMsgKey: msgKey,
-			classes: [ 'flow-ui-boardDescriptionWidget-editor' ],
-			id: this.id
+			saveMsgKey: mw.user.isAnon() ? 'flow-edit-header-submit-anonymously' : 'flow-edit-header-submit',
+			classes: [ 'flow-ui-boardDescriptionWidget-editor' ]
 		}, config.editor ) );
 		this.editor.toggle( false );
 
@@ -261,10 +249,6 @@
 				widget.emit( 'saveContent' );
 			} )
 			.catch( function ( errorCode, errorObj ) {
-				errorObj = errorObj || {};
-				if ( errorCode instanceof Error ) {
-					errorObj.exception = errorCode.toString();
-				}
 				widget.captcha.update( errorCode, errorObj );
 				if ( !widget.captcha.isRequired() ) {
 					widget.error.setLabel( new OO.ui.HtmlSnippet( errorObj.error && errorObj.error.info || errorObj.exception ) );
@@ -281,7 +265,7 @@
 
 				for ( cat in catObject ) {
 					title = mw.Title.newFromText( catObject[ cat ].title );
-					categories[ title.getMain() ] = { exists: catObject[ cat ].missing === undefined };
+					categories[ title.getName() ] = { exists: catObject[ cat ].missing === undefined };
 				}
 				// Update the board data model
 				widget.board.clearCategories();
@@ -351,4 +335,4 @@
 		this.model = model;
 	};
 
-}() );
+}( jQuery ) );

@@ -12,7 +12,6 @@ use Flow\Model\AbstractRevision;
 use Flow\Model\Header;
 use Flow\Model\PostRevision;
 use Flow\Model\PostSummary;
-use Flow\Model\UUID;
 use Flow\Model\Workflow;
 use Flow\RevisionActionPermissions;
 use Flow\Search\Iterators\AbstractIterator;
@@ -83,13 +82,13 @@ class Exporter extends WikiExporter {
 	/**
 	 * @inheritDoc
 	 */
-	public function __construct( $db, $history = WikiExporter::CURRENT,
-		$text = WikiExporter::TEXT ) {
-		parent::__construct( $db, $history, $text );
-		$this->prevRevisionProperty = new ReflectionProperty( AbstractRevision::class, 'prevRevision' );
+	function __construct( $db, $history = WikiExporter::CURRENT,
+		$buffer = WikiExporter::BUFFER, $text = WikiExporter::TEXT ) {
+		parent::__construct( $db, $history, $buffer, $text );
+		$this->prevRevisionProperty = new ReflectionProperty( 'Flow\Model\AbstractRevision', 'prevRevision' );
 		$this->prevRevisionProperty->setAccessible( true );
 
-		$this->changeTypeProperty = new ReflectionProperty( AbstractRevision::class, 'changeType' );
+		$this->changeTypeProperty = new ReflectionProperty( 'Flow\Model\AbstractRevision', 'changeType' );
 		$this->changeTypeProperty->setAccessible( true );
 
 		$this->lookup = \CentralIdLookup::factory( 'CentralAuth' );
@@ -113,7 +112,7 @@ class Exporter extends WikiExporter {
 			[
 				'xmlns' => "http://www.mediawiki.org/xml/flow-$version/",
 				'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
-				'xsi:schemaLocation' => "http://www.mediawiki.org/xml/flow-$version/ https://www.mediawiki.org/xml/flow-$version.xsd",
+				'xsi:schemaLocation' => "http://www.mediawiki.org/xml/flow-$version/ http://www.mediawiki.org/xml/flow-$version.xsd",
 				'version' => $version,
 				'xml:lang' => $wgLanguageCode
 			]
@@ -125,12 +124,9 @@ class Exporter extends WikiExporter {
 	 * @param string[]|null $pages Array of DB-prefixed page titles
 	 * @param int|null $startId page_id to start from (inclusive)
 	 * @param int|null $endId page_id to end (exclusive)
-	 * @param int|null $workflowStartId workflow_id, b36-encoded, to start from (inclusive)
-	 * @param int|null $workflowEndId wokflow_id, b36-encoded, to end (exclusive)
 	 * @return BatchRowIterator
 	 */
-	public function getWorkflowIterator( array $pages = null, $startId = null, $endId = null,
-		$workflowStartId = null, $workflowEndId = null ) {
+	public function getWorkflowIterator( array $pages = null, $startId = null, $endId = null ) {
 		/** @var IDatabase $dbr */
 		$dbr = Container::get( 'db.factory' )->getDB( DB_REPLICA );
 
@@ -161,16 +157,6 @@ class Exporter extends WikiExporter {
 			$iterator->addConditions( [ 'workflow_page_id < ' . $dbr->addQuotes( $endId ) ] );
 		}
 
-		if ( $workflowStartId ) {
-			$tempUUID = UUID::create( $workflowStartId );
-			$decodedId = $tempUUID->getBinary();
-			$iterator->addConditions( [ 'workflow_id >= ' . $dbr->addQuotes( $decodedId ) ] );
-		}
-		if ( $workflowEndId ) {
-			$tempUUID = UUID::create( $workflowEndId );
-			$decodedId = $tempUUID->getBinary();
-			$iterator->addConditions( [ 'workflow_id < ' . $dbr->addQuotes( $decodedId ) ] );
-		}
 		return $iterator;
 	}
 
@@ -239,7 +225,6 @@ class Exporter extends WikiExporter {
 		try {
 			/** @var PostSummary $summary */
 			$summary = $summaryCollection->getLastRevision();
-			// @phan-suppress-next-line PhanTypeMismatchArgument Phan cannot understand the annotation above
 			$this->formatSummary( $summary );
 		} catch ( \Exception $e ) {
 			// no summary - that's ok!
@@ -387,10 +372,6 @@ class Exporter extends WikiExporter {
 		$this->sink->write( $output );
 	}
 
-	/**
-	 * @param AbstractRevision $revision
-	 * @suppress SecurityCheck-DoubleEscaped
-	 */
 	protected function formatRevision( AbstractRevision $revision ) {
 		if ( !$this->isAllowed( $revision ) ) {
 			return;

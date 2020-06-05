@@ -14,7 +14,7 @@ class ResultDuplicator {
 	/**
 	 * Maps from the query array to its position in the query array
 	 *
-	 * @var string[]
+	 * @var array
 	 */
 	protected $queryKeys;
 
@@ -44,7 +44,7 @@ class ResultDuplicator {
 	protected $queries = [];
 
 	/**
-	 * @param string[] $queryKeys
+	 * @param array $queryKeys
 	 * @param int $dimensions
 	 */
 	public function __construct( array $queryKeys, $dimensions ) {

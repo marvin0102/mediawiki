@@ -9,10 +9,6 @@ use Flow\Data\Index\UniqueFeatureIndex;
 use Flow\Tests\FlowTestCase;
 
 /**
- * @covers \Flow\Data\Index\FeatureIndex
- * @covers \Flow\Data\Index\TopKIndex
- * @covers \Flow\Data\Index\UniqueFeatureIndex
- *
  * @group Flow
  */
 class IndexTest extends FlowTestCase {
@@ -21,7 +17,7 @@ class IndexTest extends FlowTestCase {
 		$cache = $this->getCache();
 
 		// fake ObjectMapper that doesn't roundtrip to- & fromStorageRow
-		$mapper = $this->getMockBuilder( \Flow\Data\Mapper\BasicObjectMapper::class )
+		$mapper = $this->getMockBuilder( 'Flow\Data\Mapper\BasicObjectMapper' )
 			->disableOriginalConstructor()
 			->getMock();
 		$mapper->expects( $this->any() )
@@ -30,7 +26,7 @@ class IndexTest extends FlowTestCase {
 
 		// As we are only testing the cached result, storage should never be called
 		// not sure how to test that
-		$storage = $this->getMock( \Flow\Data\ObjectStorage::class );
+		$storage = $this->getMock( 'Flow\\Data\\ObjectStorage' );
 
 		$unique = new UniqueFeatureIndex(
 			$cache, $storage, $mapper, 'unique',
@@ -69,10 +65,10 @@ class IndexTest extends FlowTestCase {
 
 	public function testCompositeShallow() {
 		$cache = $this->getCache();
-		$storage = $this->getMock( \Flow\Data\ObjectStorage::class );
+		$storage = $this->getMock( 'Flow\\Data\\ObjectStorage' );
 
 		// fake ObjectMapper that doesn't roundtrip to- & fromStorageRow
-		$mapper = $this->getMockBuilder( \Flow\Data\Mapper\BasicObjectMapper::class )
+		$mapper = $this->getMockBuilder( 'Flow\Data\Mapper\BasicObjectMapper' )
 			->disableOriginalConstructor()
 			->getMock();
 		$mapper->expects( $this->any() )
@@ -105,7 +101,7 @@ class IndexTest extends FlowTestCase {
 			[ 'id' => 1, 'ot' => 9 ],
 			[ 'id' => 1, 'ot' => 8 ],
 		] );
-		$cache->set( "$db:secondary:" . md5( 'baz' ) . ":$v", [
+		$cache->set( "$db:secondary:" . md5( 'baz' ). ":$v", [
 			[ 'id' => 3, 'ot' => 7 ],
 		] );
 

@@ -14,12 +14,7 @@ use Title;
 use User;
 
 /**
- * @covers \Flow\Formatter\RevisionFormatter
- * @covers \Flow\Model\AbstractRevision
- * @covers \Flow\Model\PostRevision
- *
  * @group Flow
- * @group Database
  */
 class RevisionFormatterTest extends PostRevisionTestCase {
 	protected $user;
@@ -160,12 +155,12 @@ class RevisionFormatterTest extends PostRevisionTestCase {
 	}
 
 	/**
+	 * @expectedException \Flow\Exception\FlowException
 	 * @dataProvider decideContentInvalidFormatProvider
 	 */
 	public function testDecideContentInvalidFormat( $setContentRequestedFormat, $setContentRevisionId, $revision ) {
 		list( $formatter ) = $this->makeFormatter();
 		$formatter->setContentFormat( $setContentRequestedFormat, $setContentRevisionId );
-		$this->expectException( \Flow\Exception\FlowException::class );
 		$formatter->decideContentFormat( $revision );
 	}
 
@@ -204,11 +199,11 @@ class RevisionFormatterTest extends PostRevisionTestCase {
 	}
 
 	/**
+	 * @expectedException \Flow\Exception\FlowException
 	 * @dataProvider setContentFormatInvalidProvider
 	 */
 	public function testSetContentFormatInvalidProvider( $requestedFormat, $revisionId ) {
 		list( $formatter ) = $this->makeFormatter();
-		$this->expectException( \Flow\Exception\FlowException::class );
 		$formatter->setContentFormat( $requestedFormat, $revisionId );
 	}
 
@@ -305,13 +300,13 @@ class RevisionFormatterTest extends PostRevisionTestCase {
 	}
 
 	protected function mockActions() {
-		return $this->getMockBuilder( FlowActions::class )
+		return $this->getMockBuilder( 'Flow\FlowActions' )
 			->disableOriginalConstructor()
 			->getMock();
 	}
 
 	protected function mockPermissions( FlowActions $actions ) {
-		$permissions = $this->getMockBuilder( \Flow\RevisionActionPermissions::class )
+		$permissions = $this->getMockBuilder( 'Flow\RevisionActionPermissions' )
 			->disableOriginalConstructor()
 			->getMock();
 		// bit of a code smell, should pass actions directly in constructor?
@@ -328,7 +323,7 @@ class RevisionFormatterTest extends PostRevisionTestCase {
 	}
 
 	protected function mockPostRevision() {
-		$postRevision = $this->getMockBuilder( PostRevision::class )->getMock();
+		$postRevision = $this->getMockBuilder( 'Flow\Model\PostRevision' )->getMock();
 		$postRevision->expects( $this->any() )
 			->method( 'isTopicTitle' )
 			->will( $this->returnValue( false ) );
@@ -339,7 +334,7 @@ class RevisionFormatterTest extends PostRevisionTestCase {
 	}
 
 	protected function mockTemplating() {
-		$templating = $this->getMockBuilder( \Flow\Templating::class )
+		$templating = $this->getMockBuilder( 'Flow\Templating' )
 			->disableOriginalConstructor()
 			->getMock();
 		$templating->expects( $this->any() )
@@ -355,7 +350,7 @@ class RevisionFormatterTest extends PostRevisionTestCase {
 	}
 
 	protected function mockTopicTitleRevision() {
-		$topicTitleRevision = $this->getMockBuilder( PostRevision::class )->getMock();
+		$topicTitleRevision = $this->getMockBuilder( 'Flow\Model\PostRevision' )->getMock();
 		$topicTitleRevision->expects( $this->any() )
 			->method( 'isTopicTitle' )
 			->will( $this->returnValue( true ) );
@@ -366,7 +361,7 @@ class RevisionFormatterTest extends PostRevisionTestCase {
 	}
 
 	protected function mockUserNameBatch() {
-		return $this->getMockBuilder( \Flow\Repository\UserNameBatch::class )
+		return $this->getMockBuilder( 'Flow\Repository\UserNameBatch' )
 			->disableOriginalConstructor()
 			->getMock();
 	}

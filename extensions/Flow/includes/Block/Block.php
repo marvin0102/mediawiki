@@ -10,6 +10,7 @@ use Flow\Model\AbstractRevision;
 use Flow\Model\UUID;
 use Flow\Model\Workflow;
 use Flow\RevisionActionPermissions;
+use Flow\SpamFilter\Controller as SpamFilterController;
 use IContextSource;
 
 interface Block {
@@ -17,7 +18,7 @@ interface Block {
 	 * @param IContextSource $context
 	 * @param string $action
 	 */
-	public function init( IContextSource $context, $action );
+	function init( IContextSource $context, $action );
 
 	/**
 	 * Perform validation of data model
@@ -25,12 +26,12 @@ interface Block {
 	 * @param array $data
 	 * @return bool True if data model is valid
 	 */
-	public function onSubmit( array $data );
+	function onSubmit( array $data );
 
 	/**
 	 * Write updates to storage
 	 */
-	public function commit();
+	function commit();
 
 	/**
 	 * Render the API output of this Block.
@@ -39,17 +40,17 @@ interface Block {
 	 * @param array $options
 	 * @return array
 	 */
-	public function renderApi( array $options );
+	function renderApi( array $options );
 
 	/**
 	 * @return string Unique name among all blocks on an object
 	 */
-	public function getName();
+	function getName();
 
 	/**
 	 * @return UUID
 	 */
-	public function getWorkflowId();
+	function getWorkflowId();
 
 	/**
 	 * Returns an array of all error types encountered in this block. The values
@@ -59,16 +60,16 @@ interface Block {
 	 *
 	 * @return array
 	 */
-	public function getErrors();
+	function getErrors();
 
 	/**
 	 * Checks if any errors have occurred in the block (no argument), or if a
 	 * specific error has occurred (argument being the error type)
 	 *
-	 * @param string|null $type
+	 * @param string[optional] $type
 	 * @return bool
 	 */
-	public function hasErrors( $type = null );
+	function hasErrors( $type = null );
 
 	/**
 	 * Returns true if the block can render the requested action, or false
@@ -223,7 +224,7 @@ abstract class AbstractBlock implements Block {
 	 * Checks if any errors have occurred in the block (no argument), or if a
 	 * specific error has occurred (argument being the error type)
 	 *
-	 * @param string|null $type
+	 * @param string[optional] $type
 	 * @return bool
 	 */
 	public function hasErrors( $type = null ) {
@@ -250,7 +251,7 @@ abstract class AbstractBlock implements Block {
 	 * @return \Message
 	 */
 	public function getErrorMessage( $type ) {
-		return $this->errors[$type]['message'] ?? null;
+		return isset( $this->errors[$type]['message'] ) ? $this->errors[$type]['message'] : null;
 	}
 
 	/**
@@ -258,13 +259,13 @@ abstract class AbstractBlock implements Block {
 	 * @return mixed
 	 */
 	public function getErrorExtra( $type ) {
-		return $this->errors[$type]['extra'] ?? null;
+		return isset( $this->errors[$type]['extra'] ) ? $this->errors[$type]['extra'] : null;
 	}
 
 	/**
 	 * @param string $type
 	 * @param \Message $message
-	 * @param mixed|null $extra
+	 * @param mixed[optional] $extra
 	 */
 	public function addError( $type, \Message $message, $extra = null ) {
 		$this->errors[$type] = [
@@ -313,10 +314,9 @@ abstract class AbstractBlock implements Block {
 	 * @param AbstractRevision|null $old null when $new is first revision
 	 * @param AbstractRevision $new
 	 * @return bool True when content is allowed by spam filter
-	 * @suppress PhanParamReqAfterOpt Nullable, not optional
 	 */
 	protected function checkSpamFilters( AbstractRevision $old = null, AbstractRevision $new ) {
-		/** @var \Flow\SpamFilter\Controller $spamFilter */
+		/** @var SpamFilterController $spamFilter */
 		$spamFilter = Container::get( 'controller.spamfilter' );
 		$status = $spamFilter->validate( $this->context, $new, $old, $this->workflow->getArticleTitle(), $this->workflow->getOwnerTitle() );
 		if ( $status->isOK() ) {

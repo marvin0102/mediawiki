@@ -13,7 +13,6 @@
 // Top board header
 .flow-board-header-nav {
 	margin-bottom: 10px;
-
 	.mw-ui-button {
 		padding: 0;
 	}
@@ -29,9 +28,11 @@
 	}
 }
 
-// Use specificity to override skin's h2.
-.mw-body h2.flow-board-header-title {
+// need to be specific to override this h2
+/* stylelint-disable selector-max-id */
+div#content h2.flow-board-header-title {
 	margin-right: 10px;
+
 	margin-top: 0;
 	margin-bottom: 10px;
 	border-bottom: 0;
@@ -39,10 +40,11 @@
 	font-weight: bold;
 	font-size: 1.15em;
 
-	&.mw-ui-icon:before {
-		width: 20px;
+	> .mw-ui-icon {
+		font-size: 1 / 1.15em;
 	}
 }
+/* stylelint-enable selector-max-id */
 
 .flow-board-header-title {
 	display: none;

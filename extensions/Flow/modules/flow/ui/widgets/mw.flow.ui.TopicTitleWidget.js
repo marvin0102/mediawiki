@@ -1,4 +1,4 @@
-( function () {
+( function ( $ ) {
 	/**
 	 * Topic title widget
 	 *
@@ -11,16 +11,13 @@
 	 */
 	mw.flow.ui.TopicTitleWidget = function mwFlowUiTopicTitleWidget( topicId, config ) {
 		var widget = this;
-
-		// Parent constructor
-		mw.flow.ui.TopicTitleWidget.super.call( this, config );
+		config = config || {};
+		mw.flow.ui.TopicTitleWidget.parent.call( this, config );
 
 		this.topicId = topicId;
 		this.api = new mw.flow.dm.APIHandler(
 			'Topic:' + topicId
 		);
-
-		this.id = 'edit-topic/' + this.topicId;
 
 		this.anonWarning = new mw.flow.ui.AnonWarningWidget();
 		this.anonWarning.toggle( true );
@@ -68,10 +65,8 @@
 		);
 
 		// Events
-		this.saveButton.connect( this, { click: 'onSaveButtonClick' } );
-		this.cancelButton.connect( this, { click: 'onCancelButtonClick' } );
-		this.input.connect( this, { enter: 'onSaveButtonClick' } );
-		this.input.$input.on( 'keydown', this.onInputKeyDown.bind( this ) );
+		this.saveButton.connect( this, { click: [ 'onSaveButtonClick' ] } );
+		this.cancelButton.connect( this, { click: [ 'emit', 'cancel' ] } );
 
 		this.$element
 			.addClass( 'flow-ui-topicTitleWidget' )
@@ -90,7 +85,7 @@
 					currentRevisionId = topic.revisionId;
 
 				widget.api.setCurrentRevision( currentRevisionId );
-				widget.input.setValue( mw.storage.session.get( widget.id + '/title' ) || content );
+				widget.input.setValue( content );
 			},
 			function ( error ) {
 				widget.error.setLabel( mw.msg( 'flow-error-external', error ) );
@@ -99,9 +94,6 @@
 		).always(
 			function () {
 				widget.popPending();
-				widget.input.moveCursorToEnd().focus();
-				// Connect change listener after widget has been populated
-				widget.input.connect( widget, { change: 'onInputChange' } );
 			}
 		);
 
@@ -133,37 +125,20 @@
 		).always(
 			function () {
 				widget.popPending();
-				mw.storage.session.remove( widget.id + '/title' );
 			}
 		);
-	};
-
-	mw.flow.ui.TopicTitleWidget.prototype.onCancelButtonClick = function () {
-		mw.storage.session.remove( this.id + '/title' );
-		this.emit( 'cancel' );
-	};
-
-	mw.flow.ui.TopicTitleWidget.prototype.onInputChange = function () {
-		mw.storage.session.set( this.id + '/title', this.input.getValue() );
-	};
-
-	mw.flow.ui.TopicTitleWidget.prototype.onInputKeyDown = function ( e ) {
-		if ( e.which === OO.ui.Keys.ESCAPE ) {
-			this.onCancelButtonClick();
-			return false;
-		}
 	};
 
 	mw.flow.ui.TopicTitleWidget.prototype.isDisabled = function () {
 		// Auto-disable when pending
 		return ( this.input && this.input.isPending() ) ||
 			// Parent method
-			mw.flow.ui.TopicTitleWidget.super.prototype.isDisabled.apply( this, arguments );
+			mw.flow.ui.TopicTitleWidget.parent.prototype.isDisabled.apply( this, arguments );
 	};
 
-	mw.flow.ui.TopicTitleWidget.prototype.setDisabled = function () {
+	mw.flow.ui.TopicTitleWidget.prototype.setDisabled = function ( disabled ) {
 		// Parent method
-		mw.flow.ui.TopicTitleWidget.super.prototype.setDisabled.apply( this, arguments );
+		mw.flow.ui.TopicTitleWidget.parent.prototype.setDisabled.call( this, disabled );
 
 		if ( this.input && this.saveButton && this.cancelButton ) {
 			this.input.setDisabled( this.isDisabled() );
@@ -186,4 +161,4 @@
 		this.updateDisabled();
 	};
 
-}() );
+}( jQuery ) );

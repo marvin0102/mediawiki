@@ -1,4 +1,4 @@
-( function () {
+( function ( $ ) {
 	/**
 	 * Flow editor controls widget
 	 *
@@ -19,7 +19,7 @@
 		config = config || {};
 
 		// Parent constructor
-		mw.flow.ui.EditorControlsWidget.super.call( this, config );
+		mw.flow.ui.EditorControlsWidget.parent.call( this, config );
 
 		this.termsLabel = new OO.ui.LabelWidget( {
 			classes: [ 'flow-ui-editorControlsWidget-termsLabel' ],
@@ -82,9 +82,9 @@
 		this.saveButton.setDisabled( this.isDisabled() || !this.saveable );
 	};
 
-	mw.flow.ui.EditorControlsWidget.prototype.setDisabled = function () {
+	mw.flow.ui.EditorControlsWidget.prototype.setDisabled = function ( disabled ) {
 		// Parent method
-		mw.flow.ui.EditorControlsWidget.super.prototype.setDisabled.apply( this, arguments );
+		mw.flow.ui.EditorControlsWidget.parent.prototype.setDisabled.call( this, disabled );
 
 		if ( this.cancelButton && this.saveButton ) {
 			this.cancelButton.setDisabled( this.isDisabled() );
@@ -92,4 +92,4 @@
 		}
 	};
 
-}() );
+}( jQuery ) );

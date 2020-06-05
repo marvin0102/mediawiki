@@ -2,17 +2,17 @@
 
 namespace Flow\Import\LiquidThreadsApi;
 
-use MediaWiki\MediaWikiServices;
 use Wikimedia\Rdbms\IDatabase;
 use Flow\Import\ArchiveNameHelper;
 use Flow\Import\IConversionStrategy;
-use Flow\Import\SourceStore\SourceStoreInterface;
+use Flow\Import\SourceStore\SourceStoreInterface as ImportSourceStore;
 use Flow\Import\Postprocessor\ProcessorGroup;
 use Flow\Import\Postprocessor\LqtNotifications;
 use Flow\Import\Postprocessor\LqtRedirector;
 use Flow\NotificationController;
 use Flow\UrlGenerator;
 use LqtDispatch;
+use MagicWord;
 use MWTimestamp;
 use Title;
 use User;
@@ -20,7 +20,7 @@ use WikitextContent;
 
 /**
  * Converts LiquidThreads pages on a wiki to Flow. This converter is idempotent
- * when used with an appropriate SourceStoreInterface, and may be run many times
+ * when used with an appropriate ImportSourceStore, and may be run many times
  * without worry for duplicate imports.
  *
  * Pages with the LQT magic word will be moved to a subpage of their original location
@@ -35,7 +35,7 @@ class ConversionStrategy implements IConversionStrategy {
 	protected $dbw;
 
 	/**
-	 * @var SourceStoreInterface
+	 * @var ImportSourceStore
 	 */
 	protected $sourceStore;
 
@@ -61,7 +61,7 @@ class ConversionStrategy implements IConversionStrategy {
 
 	public function __construct(
 		IDatabase $dbw,
-		SourceStoreInterface $sourceStore,
+		ImportSourceStore $sourceStore,
 		ApiBackend $api,
 		UrlGenerator $urlGenerator,
 		User $talkpageUser,
@@ -126,7 +126,7 @@ class ConversionStrategy implements IConversionStrategy {
 	 */
 	public function createArchiveCleanupRevisionContent( WikitextContent $content, Title $title ) {
 		// cleanup existing text
-		$existing = $content->getText();
+		$existing = $content->getNativeData();
 		$existing = self::removeLqtMagicWord( $existing );
 		$existing = $this->removePrefixText( $existing );
 
@@ -191,15 +191,13 @@ class ConversionStrategy implements IConversionStrategy {
 	 * @return string
 	 */
 	public static function removeLqtMagicWord( $content ) {
-		$magicWord = MediaWikiServices::getInstance()->getMagicWordFactory()->
-			get( 'useliquidthreads' );
 		$patterns = array_map(
 			// delete any status: enabled or disabled doesn't matter (we're
 			// adding disabled magic word anyway and having it twice is messy)
 			function ( $word ) {
 				return '/{{\\s*#' . preg_quote( $word ) . ':\\s*[01]*\\s*}}/i';
 			},
-			[ 'useliquidthreads' ] + $magicWord->getSynonyms() );
+			[ 'useliquidthreads' ] + MagicWord::get( 'useliquidthreads' )->getSynonyms() );
 
 		return preg_replace( $patterns, '', $content );
 	}
@@ -208,9 +206,7 @@ class ConversionStrategy implements IConversionStrategy {
 	 * @return string The localized magic word to disable LQT on a page
 	 */
 	public static function getDisableLqtMagicWord() {
-		$wordObj = MediaWikiServices::getInstance()->getMagicWordFactory()->
-			get( 'useliquidthreads' );
-		$magicWord = strtolower( $wordObj->getSynonym( 0 ) );
+		$magicWord = strtolower( MagicWord::get( 'useliquidthreads' )->getSynonym( 0 ) );
 		return "{{#$magicWord:0}}";
 	}
 }

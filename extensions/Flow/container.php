@@ -6,7 +6,7 @@ $c = new Flow\Container;
 if ( defined( 'RUN_MAINTENANCE_IF_MAIN' ) ) {
 	$c['user'] = new User;
 } else {
-	$c['user'] = $GLOBALS['wgUser'] ?? new User;
+	$c['user'] = isset( $GLOBALS['wgUser'] ) ? $GLOBALS['wgUser'] : new User;
 }
 $c['output'] = $GLOBALS['wgOut'];
 $c['request'] = $GLOBALS['wgRequest'];
@@ -168,7 +168,7 @@ $c['collection.cache'] = function ( $c ) {
 	return new Flow\Collection\CollectionCache();
 };
 // Individual workflow instances
-$c['storage.workflow.class'] = \Flow\Model\Workflow::class;
+$c['storage.workflow.class'] = 'Flow\Model\Workflow';
 $c['storage.workflow.table'] = 'flow_workflow';
 $c['storage.workflow.primary_key'] = [ 'workflow_id' ];
 $c['storage.workflow.mapper'] = function ( $c ) {
@@ -359,7 +359,7 @@ $c['storage.header.listeners'] = function ( $c ) {
 };
 $c['storage.header.primary_key'] = [ 'rev_id' ];
 $c['storage.header.mapper'] = function ( $c ) {
-	return CachingObjectMapper::model( \Flow\Model\Header::class, [ 'rev_id' ] );
+	return CachingObjectMapper::model( 'Flow\\Model\\Header', [ 'rev_id' ] );
 };
 $c['storage.header.backend'] = function ( $c ) {
 	global $wgFlowExternalStore;
@@ -411,7 +411,7 @@ $c['storage.header'] = function ( $c ) {
 	);
 };
 
-$c['storage.post_summary.class'] = \Flow\Model\PostSummary::class;
+$c['storage.post_summary.class'] = 'Flow\Model\PostSummary';
 $c['storage.post_summary.primary_key'] = [ 'rev_id' ];
 $c['storage.post_summary.mapper'] = function ( $c ) {
 	return CachingObjectMapper::model(
@@ -489,14 +489,15 @@ $c['storage.post_summary'] = function ( $c ) {
 	);
 };
 
-$c['storage.topic_list.class'] = \Flow\Model\TopicListEntry::class;
+$c['storage.topic_list.class'] = 'Flow\Model\TopicListEntry';
 $c['storage.topic_list.table'] = 'flow_topic_list';
 $c['storage.topic_list.primary_key'] = [ 'topic_list_id', 'topic_id' ];
 $c['storage.topic_list.mapper'] = function ( $c ) {
 	// Must be BasicObjectMapper, due to variance in when
 	// we have workflow_last_update_timestamp
 	return BasicObjectMapper::model(
-		$c['storage.topic_list.class']
+		$c['storage.topic_list.class'],
+		$c['storage.topic_list.primary_key']
 	);
 };
 $c['storage.topic_list.backend'] = function ( $c ) {
@@ -559,7 +560,7 @@ $c['storage.topic_list'] = function ( $c ) {
 		$c['storage.topic_list.indexes']
 	);
 };
-$c['storage.post.class'] = \Flow\Model\PostRevision::class;
+$c['storage.post.class'] = 'Flow\Model\PostRevision';
 $c['storage.post.primary_key'] = [ 'rev_id' ];
 $c['storage.post.mapper'] = function ( $c ) {
 	return CachingObjectMapper::model(
@@ -705,21 +706,21 @@ $c['storage.post_topic_history'] = function ( $c ) {
 
 $c['storage.manager_list'] = function ( $c ) {
 	return [
-		\Flow\Model\Workflow::class => 'storage.workflow',
+		'Flow\\Model\\Workflow' => 'storage.workflow',
 		'Workflow' => 'storage.workflow',
 
-		\Flow\Model\PostRevision::class => 'storage.post',
+		'Flow\\Model\\PostRevision' => 'storage.post',
 		'PostRevision' => 'storage.post',
 		'post' => 'storage.post',
 
-		\Flow\Model\PostSummary::class => 'storage.post_summary',
+		'Flow\\Model\\PostSummary' => 'storage.post_summary',
 		'PostSummary' => 'storage.post_summary',
 		'post-summary' => 'storage.post_summary',
 
-		\Flow\Model\TopicListEntry::class => 'storage.topic_list',
+		'Flow\\Model\\TopicListEntry' => 'storage.topic_list',
 		'TopicListEntry' => 'storage.topic_list',
 
-		\Flow\Model\Header::class => 'storage.header',
+		'Flow\\Model\\Header' => 'storage.header',
 		'Header' => 'storage.header',
 		'header' => 'storage.header',
 
@@ -729,10 +730,10 @@ $c['storage.manager_list'] = function ( $c ) {
 
 		'PostRevisionTopicHistoryEntry' => 'storage.post_topic_history',
 
-		\Flow\Model\WikiReference::class => 'storage.wiki_reference',
+		'Flow\\Model\\WikiReference' => 'storage.wiki_reference',
 		'WikiReference' => 'storage.wiki_reference',
 
-		\Flow\Model\URLReference::class => 'storage.url_reference',
+		'Flow\\Model\\URLReference' => 'storage.url_reference',
 		'URLReference' => 'storage.url_reference',
 	];
 };
@@ -750,7 +751,7 @@ $c['loader.root_post'] = function ( $c ) {
 };
 
 // Queue of callbacks to run by DeferredUpdates, but only
-// on successful commit
+// on successfull commit
 $c['deferred_queue'] = function ( $c ) {
 	return new SplQueue;
 };
@@ -797,10 +798,8 @@ $c['controller.opt_in'] = function ( $c ) {
 };
 
 $c['controller.notification'] = function ( $c ) {
-	return new Flow\NotificationController(
-		MediaWikiServices::getInstance()->getContentLanguage(),
-		$c['repository.tree']
-	);
+	global $wgContLang;
+	return new Flow\NotificationController( $wgContLang, $c['repository.tree'] );
 };
 
 // Initialized in FlowHooks to faciliate only loading the flow container
@@ -848,7 +847,8 @@ $c['controller.spamfilter'] = function ( $c ) {
 
 $c['query.categoryviewer'] = function ( $c ) {
 	return new Flow\Formatter\CategoryViewerQuery(
-		$c['storage']
+		$c['storage'],
+		$c['repository.tree']
 	);
 };
 $c['formatter.categoryviewer'] = function ( $c ) {
@@ -929,7 +929,8 @@ $c['query.changeslist'] = function ( $c ) {
 $c['query.postsummary'] = function ( $c ) {
 	return new Flow\Formatter\PostSummaryQuery(
 		$c['storage'],
-		$c['repository.tree']
+		$c['repository.tree'],
+		$c['flow_actions']
 	);
 };
 $c['query.header.view'] = function ( $c ) {
@@ -1059,7 +1060,7 @@ $c['logger.moderation'] = function ( $c ) {
 	);
 };
 
-$c['storage.wiki_reference.class'] = \Flow\Model\WikiReference::class;
+$c['storage.wiki_reference.class'] = 'Flow\Model\WikiReference';
 $c['storage.wiki_reference.table'] = 'flow_wiki_ref';
 $c['storage.wiki_reference.primary_key'] = function ( $c ) {
 	return [
@@ -1133,7 +1134,7 @@ $c['storage.wiki_reference'] = function ( $c ) {
 		[]
 	);
 };
-$c['storage.url_reference.class'] = \Flow\Model\URLReference::class;
+$c['storage.url_reference.class'] = 'Flow\Model\URLReference';
 $c['storage.url_reference.table'] = 'flow_ext_ref';
 $c['storage.url_reference.primary_key'] = function ( $c ) {
 	return [

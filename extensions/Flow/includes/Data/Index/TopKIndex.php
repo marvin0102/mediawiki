@@ -20,14 +20,7 @@ class TopKIndex extends FeatureIndex {
 	 */
 	protected $options = [];
 
-	public function __construct(
-		FlowObjectCache $cache,
-		ObjectStorage $storage,
-		ObjectMapper $mapper,
-		$prefix,
-		array $indexed,
-		array $options = []
-	) {
+	public function __construct( FlowObjectCache $cache, ObjectStorage $storage, ObjectMapper $mapper, $prefix, array $indexed, array $options = [] ) {
 		if ( empty( $options['sort'] ) ) {
 			throw new InvalidParameterException( 'TopKIndex must be sorted' );
 		}
@@ -48,10 +41,8 @@ class TopKIndex extends FeatureIndex {
 			$this->options['sort'] = [ $this->options['sort'] ];
 		}
 		if ( $this->options['shallow'] ) {
-			// TODO: perhaps we shouldn't even get a shallow option, just receive a proper compactor in
-			// FeatureIndex::__construct
-			$this->rowCompactor = new ShallowCompactor(
-				$this->rowCompactor, $this->options['shallow'], $this->options['sort'] );
+			// TODO: perhaps we shouldn't even get a shallow option, just receive a proper compactor in FeatureIndex::__construct
+			$this->rowCompactor = new ShallowCompactor( $this->rowCompactor, $this->options['shallow'], $this->options['sort'] );
 		}
 	}
 
@@ -60,9 +51,7 @@ class TopKIndex extends FeatureIndex {
 			return false;
 		}
 
-		if ( isset( $options['offset-id'] ) ||
-			( isset( $options['offset-dir'] ) && $options['offset-dir'] !== 'fwd' )
-		) {
+		if ( isset( $options['offset-id'] ) || ( isset( $options['offset-dir'] ) && $options['offset-dir'] !== 'fwd' ) ) {
 			return false;
 		}
 
@@ -77,12 +66,6 @@ class TopKIndex extends FeatureIndex {
 		return $this->options['limit'];
 	}
 
-	/**
-	 * @param array[] $results
-	 * @param array $options
-	 *
-	 * @return array[]
-	 */
 	protected function filterResults( array $results, array $options = [] ) {
 		foreach ( $results as $i => $result ) {
 			list( $offset, $limit ) = $this->getOffsetLimit( $result, $options );
@@ -100,10 +83,10 @@ class TopKIndex extends FeatureIndex {
 	 * @param array $options
 	 * @return array [offset, limit] 0-based index to start with and limit.
 	 */
-	protected function getOffsetLimit( array $rows, array $options ) {
-		$limit = $options['limit'] ?? $this->getLimit();
+	protected function getOffsetLimit( $rows, $options ) {
+		$limit = isset( $options['limit'] ) ? $options['limit'] : $this->getLimit();
 
-		$offsetValue = $options['offset-value'] ?? null;
+		$offsetValue = isset( $options['offset-value'] ) ? $options['offset-value'] : null;
 
 		$dir = 'fwd';
 		if (
@@ -159,7 +142,7 @@ class TopKIndex extends FeatureIndex {
 	 * @return int The position of $offsetValue within $rows
 	 * @throws DataModelException When $offsetValue is not found within $rows
 	 */
-	protected function getOffsetFromOffsetValue( array $rows, $offsetValue ) {
+	protected function getOffsetFromOffsetValue( $rows, $offsetValue ) {
 		$rowIndex = 0;
 		$nextInOrder = $this->getOrder() === 'DESC' ? -1 : 1;
 		foreach ( $rows as $row ) {
@@ -192,8 +175,7 @@ class TopKIndex extends FeatureIndex {
 		$fieldIndex = 0;
 
 		if ( $sortFields === false ) {
-			throw new DataModelException( 'This Index implementation does not support offset values',
-				'process-data' );
+			throw new DataModelException( 'This Index implementation does not support offset values', 'process-data' );
 		}
 
 		foreach ( $sortFields as $field ) {

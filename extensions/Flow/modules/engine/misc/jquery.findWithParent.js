@@ -1,8 +1,8 @@
-( function () {
+( function ( $ ) {
 	/** @class jQuery */
 
 	/**
-	 * Adds support to find parent elements using .closest with less-than selector syntax.
+	 * Gives support to find parent elements using .closest with less-than selector syntax.
 	 *
 	 *     $.findWithParent( $div, "< html div < body" ); // find closest parent of $div "html", find child "div" of it, find closest parent "body" of that, return "body"
 	 *     $( '#foo' ).findWithParent( '.bar < .baz' ); // find child ".bar" of "#foo", return closest parent ".baz" from there
@@ -16,16 +16,16 @@
 		var matches;
 
 		$context = $( $context );
-		selector = selector.trim();
+		selector = $.trim( selector );
 
 		while ( selector && ( matches = selector.match( /(.*?(?:^|[>\s+~]))(<\s*[^>\s+~]+)(.*?)$/ ) ) ) {
-			if ( matches[ 1 ].trim() ) {
+			if ( $.trim( matches[ 1 ] ) ) {
 				$context = $context.find( matches[ 1 ] );
 			}
-			if ( matches[ 2 ].trim() ) {
+			if ( $.trim( matches[ 2 ] ) ) {
 				$context = $context.closest( matches[ 2 ].substr( 1 ) );
 			}
-			selector = matches[ 3 ].trim();
+			selector = $.trim( matches[ 3 ] );
 		}
 
 		if ( selector ) {
@@ -48,10 +48,10 @@
 			$elements = $(),
 			self = this;
 
-		selectors.forEach( function ( selector ) {
+		$.each( selectors, function ( i, selector ) {
 			$elements = $elements.add( jQueryFindWithParent( self, selector ) );
 		} );
 
 		return $elements;
 	};
-}() );
+}( jQuery ) );

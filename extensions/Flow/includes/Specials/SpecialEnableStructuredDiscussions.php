@@ -39,8 +39,6 @@ class SpecialEnableStructuredDiscussions extends FormSpecialPage {
 	}
 
 	public function execute( $par ) {
-		$this->addHelpLink( 'Help:Structured Discussions/Activation' );
-
 		if ( $par !== null ) {
 			$title = Title::newFromText( $par );
 			if ( $title ) {

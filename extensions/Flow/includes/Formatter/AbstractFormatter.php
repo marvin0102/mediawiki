@@ -9,7 +9,7 @@ use Flow\Model\PostRevision;
 use Flow\RevisionActionPermissions;
 use Html;
 use IContextSource;
-use MediaWiki\MediaWikiServices;
+use Linker;
 use Message;
 
 /**
@@ -41,10 +41,7 @@ abstract class AbstractFormatter {
 	 */
 	protected $serializer;
 
-	public function __construct(
-		RevisionActionPermissions $permissions,
-		RevisionFormatter $serializer
-	) {
+	public function __construct( RevisionActionPermissions $permissions, RevisionFormatter $serializer ) {
 		$this->permissions = $permissions;
 		$this->serializer = $serializer;
 	}
@@ -68,11 +65,7 @@ abstract class AbstractFormatter {
 	 *  have the same kind of links available)
 	 * @return string HTML
 	 */
-	protected function formatTimestamp(
-		array $data,
-		$key = 'timeAndDate',
-		array $linkKeys = [ 'header-revision', 'topic-revision', 'post-revision', 'summary-revision' ]
-	) {
+	protected function formatTimestamp( array $data, $key = 'timeAndDate', $linkKeys = [ 'header-revision', 'topic-revision', 'post-revision', 'summary-revision' ] ) {
 		// Format timestamp: add link
 		$formattedTime = $data['dateFormats'][$key];
 
@@ -107,14 +100,10 @@ abstract class AbstractFormatter {
 	 *
 	 * @param array $links Contains any combination of Anchor|Message|string
 	 * @param IContextSource $ctx
-	 * @param string[]|null $request List of link names to be allowed in result output
+	 * @param string[] $request List of link names to be allowed in result output
 	 * @return string Html valid for user output
 	 */
-	protected function formatAnchorsAsPipeList(
-		array $links,
-		IContextSource $ctx,
-		array $request = null
-	) {
+	protected function formatAnchorsAsPipeList( array $links, IContextSource $ctx, array $request = null ) {
 		if ( $request === null ) {
 			$request = array_keys( $links );
 		} elseif ( !$request ) {
@@ -152,7 +141,7 @@ abstract class AbstractFormatter {
 	 * in a format that can be wrapped in an array and passed to
 	 * formatLinksAsPipeList.
 	 *
-	 * @param Anchor[] $input
+	 * @param array[][] $input Associative array containing (url, message) tuples
 	 * @param IContextSource $ctx
 	 * @return Anchor|Message
 	 */
@@ -170,7 +159,7 @@ abstract class AbstractFormatter {
 	 * in a format that can be wrapped in an array and passed to
 	 * formatLinksAsPipeList.
 	 *
-	 * @param Anchor[] $input
+	 * @param array[][] $input Associative array containing (url, message) tuples
 	 * @param IContextSource $ctx
 	 * @return Anchor|Message
 	 */
@@ -188,7 +177,7 @@ abstract class AbstractFormatter {
 	 * in a format that can be wrapped in an array and passed to
 	 * formatLinksAsPipeList.
 	 *
-	 * @param Anchor[] $input
+	 * @param array[][] $input Associative array containing (url, message) tuples
 	 * @param IContextSource $ctx
 	 * @return Anchor|Message
 	 */
@@ -206,7 +195,7 @@ abstract class AbstractFormatter {
 	 * format that can be wrapped in an array and passed to
 	 * formatLinksAsPipeList.
 	 *
-	 * @param Anchor[] $input
+	 * @param array[][] $input Associative array containing (url, message) tuples
 	 * @param IContextSource $ctx
 	 * @return Anchor|Message
 	 */
@@ -222,7 +211,7 @@ abstract class AbstractFormatter {
 		}
 
 		if ( $anchor instanceof Anchor ) {
-			$anchor->setMessage( $ctx->msg( 'hist' ) );
+			$anchor->setMessage( wfMessage( 'hist' ) );
 			return $anchor;
 		} else {
 			// plain text with no link
@@ -272,8 +261,7 @@ abstract class AbstractFormatter {
 			if ( isset( $data['properties'][$param] ) ) {
 				$params[] = $data['properties'][$param];
 			} else {
-				wfDebugLog( 'Flow', __METHOD__ .
-					": Missing expected parameter $param for change type $changeType" );
+				wfDebugLog( 'Flow', __METHOD__ . ": Missing expected parameter $param for change type $changeType" );
 				$params[] = '';
 			}
 		}
@@ -303,7 +291,7 @@ abstract class AbstractFormatter {
 	 * @return string HTML linking to topic & board
 	 */
 	protected function getTitleLink( array $data, FormatterRow $row, IContextSource $ctx ) {
-		$ownerLink = MediaWikiServices::getInstance()->getLinkRenderer()->makeLink(
+		$ownerLink = Linker::link(
 			$row->workflow->getOwnerTitle(),
 			null,
 			[ 'class' => 'mw-title' ]
@@ -316,11 +304,9 @@ abstract class AbstractFormatter {
 		$topic = $data['links']['topic'];
 
 		// generated link has generic link text, should be actual topic title
-		// @phan-suppress-next-line PhanUndeclaredMethod $row->revision being PostRevision is not inferred
 		$root = $row->revision->getRootPost();
 		if ( $root && $this->permissions->isAllowed( $root, 'view' ) ) {
-			$topicDisplayText = Container::get( 'templating' )
-				->getContent( $root, 'topic-title-plaintext' );
+			$topicDisplayText = Container::get( 'templating' )->getContent( $root, 'topic-title-plaintext' );
 			$topic->setMessage( $topicDisplayText );
 		}
 

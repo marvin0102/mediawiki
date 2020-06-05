@@ -1,4 +1,4 @@
-( function () {
+( function ( mw, OO, ve ) {
 	'use strict';
 
 	mw.flow.ve = {
@@ -10,19 +10,16 @@
 	 *
 	 * @class
 	 * @extends ve.init.mw.Target
-	 *
-	 * @param {Object} config Configuration options
 	 */
-	mw.flow.ve.Target = function FlowVeTarget( config ) {
-		config = config || {};
+	mw.flow.ve.Target = function FlowVeTarget() {
+		mw.flow.ve.Target.parent.call( this, {
+			toolbarConfig: { actions: true, position: 'bottom' }
+		} );
 
-		// Parent constructor
-		mw.flow.ve.Target.super.call( this, ve.extendObject( {
-			toolbarConfig: { actions: true, $overlay: true, position: 'bottom' }
-		}, config ) );
-
-		this.id = config.id;
 		this.switchingPromise = null;
+
+		// HACK: stop VE's education popups from appearing (T116643)
+		this.dummyToolbar = true;
 	};
 
 	OO.inheritClass( mw.flow.ve.Target, ve.init.mw.Target );
@@ -45,32 +42,26 @@
 
 	mw.flow.ve.Target.static.toolbarGroups = [
 		{
-			name: 'style',
 			type: 'list',
 			icon: 'textStyle',
 			title: OO.ui.deferMsg( 'visualeditor-toolbar-style-tooltip' ),
-			include: [ { group: 'textStyle' }, 'language', 'clear' ],
-			forceExpand: [ 'bold', 'italic' ],
-			demote: [ 'strikethrough', 'code', 'underline', 'language', 'big', 'small', 'clear' ]
+			include: [ 'bold', 'italic' ],
+			forceExpand: [ 'bold', 'italic' ]
 		},
 
-		{
-			name: 'link',
-			include: [ 'link' ]
-		},
+		{ include: [ 'link' ] },
 
-		{
-			name: 'flowMention',
-			include: [ 'flowMention' ]
-		}
+		{ include: [ 'flowMention' ] }
 	];
 
 	// Allow pasting links
 	mw.flow.ve.Target.static.importRules = ve.copy( mw.flow.ve.Target.static.importRules );
-	mw.flow.ve.Target.static.importRules.external.blacklist[ 'link/mwExternal' ] = false;
+	mw.flow.ve.Target.static.importRules.external.blacklist = OO.simpleArrayDifference(
+		mw.flow.ve.Target.static.importRules.external.blacklist,
+		[ 'link/mwExternal' ]
+	);
 
 	mw.flow.ve.Target.static.actionGroups = [ {
-		name: 'editMode',
 		type: 'list',
 		icon: 'edit',
 		title: mw.msg( 'visualeditor-mweditmode-tooltip' ),
@@ -79,36 +70,17 @@
 
 	// Methods
 
-	mw.flow.ve.Target.prototype.addSurface = function ( dmDoc, config ) {
-		// eslint-disable-next-line no-jquery/no-global-selector
-		config = ve.extendObject( { $overlayContainer: $( '#content' ) }, config );
-		// Parent method
-		return mw.flow.ve.Target.super.prototype.addSurface.call( this, dmDoc, config );
-	};
-
 	/**
 	 * Load content into the editor
 	 * @param {string} content HTML or wikitext
 	 */
 	mw.flow.ve.Target.prototype.loadContent = function ( content ) {
-		var doc,
-			sessionState = ve.init.platform.sessionStorage.getObject( this.id + '/ve-docstate' );
-
-		if ( sessionState && !this.switchingDeferred ) {
-			content = ve.init.platform.sessionStorage.get( this.id + '/ve-dochtml' );
-			this.setDefaultMode( sessionState.mode );
-			this.recovered = true;
-		} else {
-			// TODO: If recovery data is from the wrong mode, switch mode
-			this.recovered = false;
-		}
-
-		// We have to pass null for the section parameter so that <section> tags get unwrapped
-		doc = this.constructor.static.parseDocument( content, this.getDefaultMode(), null );
-		this.originalHtml = content;
-
+		var doc = this.constructor.static.parseDocument( content, this.getDefaultMode() );
 		this.documentReady( doc );
 	};
+
+	// These tools aren't available so don't bother generating them
+	mw.flow.ve.Target.prototype.generateCitationFeatures = function () {};
 
 	mw.flow.ve.Target.prototype.attachToolbar = function () {
 		this.$element.after( this.getToolbar().$element );
@@ -117,7 +89,7 @@
 	mw.flow.ve.Target.prototype.setDisabled = function ( disabled ) {
 		var i, len;
 		for ( i = 0, len = this.surfaces.length; i < len; i++ ) {
-			this.surfaces[ i ].setReadOnly( disabled );
+			this.surfaces[ i ].setDisabled( disabled );
 		}
 	};
 
@@ -154,20 +126,16 @@
 	};
 
 	mw.flow.ve.Target.prototype.surfaceReady = function () {
-		var deferred,
-			surfaceModel = this.getSurface().getModel();
+		var deferred;
+
+		// Parent method
+		mw.flow.ve.Target.parent.prototype.surfaceReady.apply( this, arguments );
 
 		if ( this.switchingDeferred ) {
 			deferred = this.switchingDeferred;
 			this.switchingDeferred = null;
 			deferred.resolve();
 		}
-
-		surfaceModel.setAutosaveDocId( this.id );
-		this.initAutosave();
-
-		// Parent method
-		mw.flow.ve.Target.super.prototype.surfaceReady.apply( this, arguments );
 
 		// Re-emit main surface 'submit' as target 'submit'
 		this.getSurface().on( 'submit', this.emit.bind( this, 'submit' ) );
@@ -203,7 +171,12 @@
 			title: mw.config.get( 'wgPageName' )
 		} )
 			.then( function ( data ) {
-				return data[ 'flow-parsoid-utils' ].content;
+				var content = data[ 'flow-parsoid-utils' ].content;
+				if ( toFormat === 'html' ) {
+					// loadContent() expects a full document, but the API only gives us the body content
+					content = '<body>' + content + '</body>';
+				}
+				return content;
 			}, function () {
 				return mw.msg( 'flow-error-parsoid-failure' );
 			} );
@@ -213,4 +186,4 @@
 
 	ve.init.mw.targetFactory.register( mw.flow.ve.Target );
 
-}() );
+}( mediaWiki, OO, ve ) );

@@ -22,7 +22,6 @@ use Flow\Model\UUID;
 use Flow\Model\Workflow;
 use Flow\NotificationController;
 use Flow\Repository\RootPostLoader;
-use MediaWiki\MediaWikiServices;
 use Message;
 
 class TopicBlock extends AbstractBlock {
@@ -100,9 +99,7 @@ class TopicBlock extends AbstractBlock {
 			$this->rootLoader = $root;
 		} else {
 			throw new DataModelException(
-				'Expected PostRevision or RootPostLoader, received: ' .
-					is_object( $root ) ? get_class( $root ) : gettype( $root ),
-				'invalid-input'
+				'Expected PostRevision or RootPostLoader, received: ' . is_object( $root ) ? get_class( $root ) : gettype( $root ), 'invalid-input'
 			);
 		}
 	}
@@ -168,14 +165,11 @@ class TopicBlock extends AbstractBlock {
 			return;
 		}
 		if ( $len > PostRevision::MAX_TOPIC_LENGTH ) {
-			// @phan-suppress-next-line PhanParamTooMany T191666
-			$this->addError( 'content', $this->context->msg(
-				'flow-error-title-too-long', PostRevision::MAX_TOPIC_LENGTH ) );
+			$this->addError( 'content', $this->context->msg( 'flow-error-title-too-long', PostRevision::MAX_TOPIC_LENGTH ) );
 			return;
 		}
 		if ( empty( $this->submitted['prev_revision'] ) ) {
-			$this->addError( 'prev_revision', $this->context->msg(
-				'flow-error-missing-prev-revision-identifier' ) );
+			$this->addError( 'prev_revision', $this->context->msg( 'flow-error-missing-prev-revision-identifier' ) );
 			return;
 		}
 		$topicTitle = $this->loadTopicTitle();
@@ -187,12 +181,11 @@ class TopicBlock extends AbstractBlock {
 			return;
 		}
 		if ( $topicTitle->getRevisionId()->getAlphadecimal() !== $this->submitted['prev_revision'] ) {
-			// This is a reasonably effective way to ensure prev revision matches, but for guarantees
-			// against race conditions there also exists a unique index on rev_prev_revision in mysql,
-			// meaning if someone else inserts against the parent we and the submitter think is the
-			// latest, our insert will fail.
-			// TODO: Catch whatever exception happens there, make sure the most recent revision is the
-			// one in the cache before handing user back to specific dialog indicating race condition
+			// This is a reasonably effective way to ensure prev revision matches, but for guarantees against race
+			// conditions there also exists a unique index on rev_prev_revision in mysql, meaning if someone else inserts against the
+			// parent we and the submitter think is the latest, our insert will fail.
+			// TODO: Catch whatever exception happens there, make sure the most recent revision is the one in the cache before
+			// handing user back to specific dialog indicating race condition
 			$this->addError(
 				'prev_revision',
 				$this->context->msg( 'flow-error-prev-revision-mismatch' )->params(
@@ -240,7 +233,7 @@ class TopicBlock extends AbstractBlock {
 			$this->context->getUser(),
 			$this->submitted['content'],
 			// default to wikitext when not specified, for old API requests
-			$this->submitted['format'] ?? 'wikitext'
+			isset( $this->submitted['format'] ) ? $this->submitted['format'] : 'wikitext'
 		);
 		if ( !$this->checkSpamFilters( null, $this->newRevision ) ) {
 			return;
@@ -286,7 +279,9 @@ class TopicBlock extends AbstractBlock {
 		}
 
 		// Moderation state supplied in request parameters
-		$moderationState = $this->submitted['moderationState'] ?? null;
+		$moderationState = isset( $this->submitted['moderationState'] )
+			? $this->submitted['moderationState']
+			: null;
 
 		// $moderationState should be a string like 'restore', 'suppress', etc.  The exact strings allowed
 		// are checked below with $post->isValidModerationState(), but this is checked first otherwise
@@ -392,7 +387,7 @@ class TopicBlock extends AbstractBlock {
 			$this->context->getUser(),
 			$this->submitted['content'],
 			// default to wikitext when not specified, for old API requests
-			$this->submitted['format'] ?? 'wikitext',
+			isset( $this->submitted['format'] ) ? $this->submitted['format'] : 'wikitext',
 			'edit-post',
 			$this->workflow->getArticleTitle()
 		);
@@ -588,19 +583,16 @@ class TopicBlock extends AbstractBlock {
 	// @Todo - duplicated logic in other diff view block
 	protected function renderDiffViewApi( array $options ) {
 		if ( !isset( $options['newRevision'] ) ) {
-			throw new InvalidInputException( 'A revision must be provided for comparison',
-				'revision-comparison' );
+			throw new InvalidInputException( 'A revision must be provided for comparison', 'revision-comparison' );
 		}
 		$oldRevision = null;
 		if ( isset( $options['oldRevision'] ) ) {
 			$oldRevision = $options['oldRevision'];
 		}
-		list( $new, $old ) = Container::get( 'query.post.view' )
-			->getDiffViewResult( UUID::create( $options['newRevision'] ), UUID::create( $oldRevision ) );
+		list( $new, $old ) = Container::get( 'query.post.view' )->getDiffViewResult( UUID::create( $options['newRevision'] ), UUID::create( $oldRevision ) );
 
 		return [
-			'revision' => Container::get( 'formatter.revision.diff.view' )
-				->formatApi( $new, $old, $this->context )
+			'revision' => Container::get( 'formatter.revision.diff.view' )->formatApi( $new, $old, $this->context )
 		];
 	}
 
@@ -620,7 +612,7 @@ class TopicBlock extends AbstractBlock {
 
 	protected function renderTopicApi( array $options, $workflowId = '' ) {
 		$serializer = Container::get( 'formatter.topic' );
-		$format = $options['format'] ?? 'fixed-html';
+		$format = isset( $options['format'] ) ? $options['format'] : 'fixed-html';
 		$serializer->setContentFormat( $format );
 
 		if ( !$workflowId ) {
@@ -664,7 +656,7 @@ class TopicBlock extends AbstractBlock {
 			throw new FlowException( 'No posts can exist for non-existent topic' );
 		}
 
-		$format = $options['format'] ?? 'fixed-html';
+		$format = isset( $options['format'] ) ? $options['format'] : 'fixed-html';
 		$serializer = $this->getRevisionFormatter( $format );
 
 		if ( !$postId ) {
@@ -681,7 +673,7 @@ class TopicBlock extends AbstractBlock {
 		} else {
 			// $postId is only set for lock-topic, which should default to
 			// wikitext instead of html
-			$format = $options['format'] ?? 'wikitext';
+			$format = isset( $options['format'] ) ? $options['format'] : 'wikitext';
 			$serializer->setContentFormat( $format, UUID::create( $postId ) );
 		}
 
@@ -737,16 +729,14 @@ class TopicBlock extends AbstractBlock {
 		if ( $this->workflow->isNew() ) {
 			throw new FlowException( 'No topic history can exist for non-existent topic' );
 		}
-		return $this->processHistoryResult( Container::get( 'query.topic.history' ),
-			$this->workflow->getId(), $options, $navbar );
+		return $this->processHistoryResult( Container::get( 'query.topic.history' ), $this->workflow->getId(), $options, $navbar );
 	}
 
 	protected function renderPostHistoryApi( array $options, UUID $postId, $navbar = true ) {
 		if ( $this->workflow->isNew() ) {
 			throw new FlowException( 'No post history can exist for non-existent topic' );
 		}
-		return $this->processHistoryResult( Container::get( 'query.post.history' ),
-			$postId, $options, $navbar );
+		return $this->processHistoryResult( Container::get( 'query.post.history' ), $postId, $options, $navbar );
 	}
 
 	/**
@@ -758,15 +748,10 @@ class TopicBlock extends AbstractBlock {
 	 * @param bool $navbar Whether to include the page navbar
 	 * @return array
 	 */
-	protected function processHistoryResult(
-		/* TopicHistoryQuery|PostHistoryQuery */ $query,
-		UUID $uuid,
-		$options,
-		$navbar = true
-	) {
+	protected function processHistoryResult( /* TopicHistoryQuery|PostHistoryQuery */ $query, UUID $uuid, $options, $navbar = true ) {
 		global $wgRequest;
 
-		$format = $options['format'] ?? 'fixed-html';
+		$format = isset( $options['format'] ) ? $options['format'] : 'fixed-html';
 		$serializer = $this->getRevisionFormatter( $format );
 		$serializer->setIncludeHistoryProperties( true );
 
@@ -827,8 +812,7 @@ class TopicBlock extends AbstractBlock {
 	 */
 	public function loadTopicTitle( $action = 'view' ) {
 		if ( $this->workflow->isNew() ) {
-			throw new InvalidDataException( 'New workflows do not have any related content',
-				'missing-topic-title' );
+			throw new InvalidDataException( 'New workflows do not have any related content', 'missing-topic-title' );
 		}
 
 		if ( $this->topicTitle === null ) {
@@ -838,8 +822,7 @@ class TopicBlock extends AbstractBlock {
 				[ 'sort' => 'rev_id', 'order' => 'DESC', 'limit' => 1 ]
 			);
 			if ( !$found ) {
-				throw new InvalidDataException( 'Every workflow must have an associated topic title',
-					'missing-topic-title' );
+				throw new InvalidDataException( 'Every workflow must have an associated topic title', 'missing-topic-title' );
 			}
 			$this->topicTitle = reset( $found );
 
@@ -894,9 +877,7 @@ class TopicBlock extends AbstractBlock {
 		if ( \LogPage::isLogType( $state ) ) {
 			// check if user has sufficient permissions to see log
 			$logPage = new \LogPage( $state );
-			if ( MediaWikiServices::getInstance()->getPermissionManager()
-					->userHasRight( $this->context->getUser(), $logPage->getRestriction() )
-			) {
+			if ( $this->context->getUser()->isAllowed( $logPage->getRestriction() ) ) {
 				// LogEventsList::showLogExtract will write to OutputPage, but we
 				// actually just want that text, to write it ourselves wherever we want,
 				// so let's create an OutputPage object to then get the content from.
@@ -968,20 +949,14 @@ class TopicBlock extends AbstractBlock {
 			$post = $root->getDescendant( $postId );
 			if ( $post === null ) {
 				// The requested postId is not a member of the current workflow
-				// @phan-suppress-next-line PhanParamTooMany T191666
-				$this->addError( 'post', $this->context->msg(
-					'flow-error-invalid-postId', $postId->getAlphadecimal() ) );
+				$this->addError( 'post', $this->context->msg( 'flow-error-invalid-postId', $postId->getAlphadecimal() ) );
 				return null;
 			}
 		} else {
 			// Load the post and its root
 			$found = $this->rootLoader->getWithRoot( $postId );
-			if ( !$found['post'] || !$found['root'] ||
-				!$found['root']->getPostId()->equals( $this->workflow->getId() )
-			) {
-				// @phan-suppress-next-line PhanParamTooMany T191666
-				$this->addError( 'post', $this->context->msg(
-					'flow-error-invalid-postId', $postId->getAlphadecimal() ) );
+			if ( !$found['post'] || !$found['root'] || !$found['root']->getPostId()->equals( $this->workflow->getId() ) ) {
+				$this->addError( 'post', $this->context->msg( 'flow-error-invalid-postId', $postId->getAlphadecimal() ) );
 				return null;
 			}
 			$this->topicTitle = $topicTitle = $found['root'];
@@ -1030,16 +1005,15 @@ class TopicBlock extends AbstractBlock {
 			} else {
 				$key = 'flow-topic-html-title';
 			}
-			$out->setHTMLTitle( $out->msg( $key, [
+			$out->setHtmlTitle( $out->msg( $key, [
 				// This must be a rawParam to not expand {{foo}} in the title, it must
 				// not be htmlspecialchar'd because OutputPage::setHtmlTitle handles that.
 				Message::rawParam( $topic->getContent( 'topic-title-plaintext' ) ),
 				$title->getPrefixedText()
 			] ) );
 		} else {
-			$out->setHTMLTitle( $title->getPrefixedText() );
+			$out->setHtmlTitle( $title->getPrefixedText() );
 		}
-		$out->setSubtitle( '&lt; ' .
-			MediaWikiServices::getInstance()->getLinkRenderer()->makeLink( $title ) );
+		$out->setSubtitle( '&lt; ' . \Linker::link( $title ) );
 	}
 }

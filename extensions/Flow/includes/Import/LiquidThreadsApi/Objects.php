@@ -12,7 +12,6 @@ use Flow\Import\IImportTopic;
 use Flow\Import\ImportException;
 use Flow\Import\IObjectRevision;
 use Flow\Import\IRevisionableObject;
-use Iterator;
 use MWTimestamp;
 use Title;
 use User;
@@ -30,7 +29,7 @@ abstract class PageRevisionedObject implements IRevisionableObject {
 	 * @param ImportSource $source
 	 * @param int $pageId ID of the remote page
 	 */
-	public function __construct( $source, $pageId ) {
+	function __construct( $source, $pageId ) {
 		$this->importSource = $source;
 		$this->pageId = $pageId;
 	}
@@ -39,7 +38,7 @@ abstract class PageRevisionedObject implements IRevisionableObject {
 	 * Gets the raw revisions, after filtering but before being converted to
 	 * ImportRevision.
 	 *
-	 * @return array Page data with filtered revisions
+	 * @return Array Filtered revision array
 	 */
 	protected function getRevisionData() {
 		$pageData = $this->importSource->getPageData( $this->pageId );
@@ -328,7 +327,7 @@ class ImportRevision implements IObjectRevision {
 	 * @param IImportObject $parentObject
 	 * @param User $scriptUser Account used when the imported revision is by a suppressed user
 	 */
-	public function __construct( array $apiResponse, IImportObject $parentObject, User $scriptUser ) {
+	function __construct( array $apiResponse, IImportObject $parentObject, User $scriptUser ) {
 		$this->apiResponse = $apiResponse;
 		$this->parent = $parentObject;
 		$this->scriptUser = $scriptUser;
@@ -443,7 +442,7 @@ class ScriptedImportRevision implements IObjectRevision {
 	 * @param string $revisionText Text of revision
 	 * @param IObjectRevision $baseRevision Base revision, used only for timestamp generation
 	 */
-	public function __construct( IImportObject $parentObject, User $destinationScriptUser, $revisionText, $baseRevision ) {
+	function __construct( IImportObject $parentObject, User $destinationScriptUser, $revisionText, $baseRevision ) {
 		$this->parent = $parentObject;
 		$this->destinationScriptUser = $destinationScriptUser;
 		$this->revisionText = $revisionText;

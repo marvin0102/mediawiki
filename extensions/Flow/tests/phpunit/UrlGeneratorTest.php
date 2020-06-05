@@ -3,13 +3,10 @@
 namespace Flow\Tests;
 
 use Flow\Container;
-use Flow\Model\Anchor;
 use Flow\Model\UUID;
 use Title;
 
 /**
- * @covers \Flow\UrlGenerator
- *
  * @group Flow
  */
 class UrlGeneratorTest extends FlowTestCase {
@@ -51,7 +48,7 @@ class UrlGeneratorTest extends FlowTestCase {
 	 */
 	public function testBoardLink( Title $title, $sortBy = null, $saveSortBy = false ) {
 		$anchor = $this->urlGenerator->boardLink( $title, $sortBy, $saveSortBy );
-		$this->assertInstanceOf( Anchor::class, $anchor );
+		$this->assertInstanceOf( '\Flow\Model\Anchor', $anchor );
 
 		$link = $anchor->getFullURL();
 		$option = wfParseUrl( $link );
@@ -92,7 +89,7 @@ class UrlGeneratorTest extends FlowTestCase {
 	 */
 	public function testWatchTopicLink( Title $title, $workflowId ) {
 		$anchor = $this->urlGenerator->watchTopicLink( $title, $workflowId );
-		$this->assertInstanceOf( Anchor::class, $anchor );
+		$this->assertInstanceOf( '\Flow\Model\Anchor', $anchor );
 
 		$link = $anchor->getFullURL();
 		$option = wfParseUrl( $link );
@@ -106,7 +103,7 @@ class UrlGeneratorTest extends FlowTestCase {
 	 */
 	public function testUnwatchTopicLink( Title $title, $workflowId ) {
 		$anchor = $this->urlGenerator->unwatchTopicLink( $title, $workflowId );
-		$this->assertInstanceOf( Anchor::class, $anchor );
+		$this->assertInstanceOf( '\Flow\Model\Anchor', $anchor );
 
 		$link = $anchor->getFullURL();
 		$option = wfParseUrl( $link );

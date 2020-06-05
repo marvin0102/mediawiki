@@ -173,7 +173,7 @@ class InvalidInputException extends FlowException {
 	 * Do not log exception resulting from input error
 	 * @return bool
 	 */
-	public function isLoggable() {
+	function isLoggable() {
 		return false;
 	}
 }
@@ -224,7 +224,7 @@ class InvalidActionException extends FlowException {
 	 * Do not log exception resulting from input error
 	 * @return bool
 	 */
-	public function isLoggable() {
+	function isLoggable() {
 		return false;
 	}
 }
@@ -253,7 +253,7 @@ class PermissionException extends FlowException {
 	 * disallowed content.
 	 * @return bool
 	 */
-	public function isLoggable() {
+	function isLoggable() {
 		return false;
 	}
 }
@@ -360,8 +360,12 @@ class UnknownWorkflowIdException extends InvalidInputException {
 		return [ 'invalid-input' ];
 	}
 
+	public function getHTML() {
+		return wfMessage( 'flow-error-unknown-workflow-id' )->escaped();
+	}
+
 	public function getPageTitle() {
-		return wfMessage( 'flow-error-unknown-workflow-id-title' )->text();
+		return wfMessage( 'flow-error-unknown-workflow-id-title' )->escaped();
 	}
 }
 
@@ -380,7 +384,7 @@ class InvalidTopicUuidException extends InvalidInputException {
 	}
 
 	public function getPageTitle() {
-		return wfMessage( 'flow-error-invalid-topic-uuid-title' )->text();
+		return wfMessage( 'flow-error-invalid-topic-uuid-title' )->escaped();
 	}
 }
 

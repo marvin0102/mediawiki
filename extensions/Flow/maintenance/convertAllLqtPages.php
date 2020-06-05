@@ -2,13 +2,11 @@
 
 use Flow\Container;
 use Flow\Import\SourceStore\FileImportSourceStore;
-use Flow\Import\SourceStore\FlowRevisionsDb;
+use Flow\Import\SourceStore\FlowRevisionsDb as FlowRevisionsDBImportSourceStore;
 use Flow\Import\LiquidThreadsApi\ConversionStrategy;
 use Flow\Import\LiquidThreadsApi\LocalApiBackend;
 use Flow\Utils\NamespaceIterator;
 use Flow\Utils\PagesWithPropertyIterator;
-use MediaWiki\MediaWikiServices;
-use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 use Wikimedia\Rdbms\IDatabase;
 
@@ -24,12 +22,9 @@ require_once getenv( 'MW_INSTALL_PATH' ) !== false
 class ConvertAllLqtPages extends Maintenance {
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( "Converts LiquidThreads data to Flow data" );
-		$this->addOption( 'logfile', 'File to read and store associations between imported items ' .
-			'and their sources. This is required for the import to be idempotent.', false, true );
-		$this->addOption( 'force-recovery-conversion', 'If a previous logfile was lost, this ' .
-			'option can be set to attempt to map threads to topics that have already been ' .
-			'imported to prevent doubles.' );
+		$this->mDescription = "Converts LiquidThreads data to Flow data";
+		$this->addOption( 'logfile', 'File to read and store associations between imported items and their sources. This is required for the import to be idempotent.', false, true );
+		$this->addOption( 'force-recovery-conversion', 'If a previous logfile was lost, this option can be set to attempt to map threads to topics that have already been imported to prevent doubles.' );
 		$this->addOption( 'debug', 'Include debug information with progress report' );
 		$this->requireExtension( 'Flow' );
 	}
@@ -42,7 +37,7 @@ class ConvertAllLqtPages extends Maintenance {
 			// fallback: if we don't have a sourcestore to go on, at least look
 			// at DB to figure out what's already imported...
 			$dbr = Container::get( 'db.factory' )->getDB( DB_REPLICA );
-			$sourceStore = new FlowRevisionsDb( $dbr );
+			$sourceStore = new FlowRevisionsDBImportSourceStore( $dbr );
 		} else {
 			$this->error( 'Param logfile or force-recovery-conversion required!' );
 			$this->maybeHelp( true );
@@ -56,7 +51,7 @@ class ConvertAllLqtPages extends Maintenance {
 			$logger->setMaximumLevel( LogLevel::INFO );
 		}
 
-		$importer = Container::get( 'importer' );
+		$importer = Flow\Container::get( 'importer' );
 		$talkpageManagerUser = FlowHooks::getOccupationController()->getTalkpageManager();
 
 		$dbw = wfGetDB( DB_MASTER );
@@ -99,7 +94,7 @@ class ConvertAllLqtPages extends Maintenance {
 		$iterator->append( $withProperty->getIterator() );
 
 		if ( $wgLqtTalkPages ) {
-			foreach ( MediaWikiServices::getInstance()->getNamespaceInfo()->getTalkNamespaces() as $ns ) {
+			foreach ( MWNamespace::getTalkNamespaces() as $ns ) {
 				$logger->info( "Considering for conversion: pages in namespace $ns" );
 				$it = new NamespaceIterator( $dbw, $ns );
 				$iterator->append( $it->getIterator() );
@@ -110,5 +105,5 @@ class ConvertAllLqtPages extends Maintenance {
 	}
 }
 
-$maintClass = ConvertAllLqtPages::class;
+$maintClass = "ConvertAllLqtPages";
 require_once RUN_MAINTENANCE_IF_MAIN;

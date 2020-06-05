@@ -205,8 +205,7 @@ abstract class AbstractQuery {
 
 		$workflow = $this->getWorkflow( $revision );
 		if ( !$workflow ) {
-			throw new FlowException( "could not locate workflow for revision " .
-				$revision->getRevisionId()->getAlphadecimal() );
+			throw new FlowException( "could not locate workflow for revision " . $revision->getRevisionId()->getAlphadecimal() );
 		}
 
 		$row = $row ?: new FormatterRow;
@@ -244,13 +243,10 @@ abstract class AbstractQuery {
 			return false;
 		}
 
-		// we can use the timestamps to check if the reply was created at roughly the same time the
-		// topic was created if they're 0 or 1 seconds apart, they must have been created in the
-		// same request unless our servers are extremely slow and can't create topic + first reply
-		// in < 1 seconds, this should be a pretty safe method to detect first reply
-		if ( $revision->getPostId()->getTimestamp( TS_UNIX ) -
-			$root->getPostId()->getTimestamp( TS_UNIX ) >= 2
-		) {
+		// we can use the timestamps to check if the reply was created at roughly the same time the topic was created
+		// if they're 0 or 1 seconds apart, they must have been created in the same request
+		// unless our servers are extremely slow and can't create topic + first reply in < 1 seconds, this should be a pretty safe method to detect first reply
+		if ( $revision->getPostId()->getTimestamp( TS_UNIX ) - $root->getPostId()->getTimestamp( TS_UNIX ) >= 2 ) {
 			return false;
 		}
 
@@ -308,8 +304,7 @@ abstract class AbstractQuery {
 	/**
 	 * Retrieves the previous revision for a given AbstractRevision
 	 * @param AbstractRevision $revision The revision to retrieve the previous revision for.
-	 * @return AbstractRevision|null AbstractRevision of the previous revision or null if no
-	 *   previous revision.
+	 * @return AbstractRevision|null AbstractRevision of the previous revision or null if no previous revision.
 	 */
 	protected function getPreviousRevision( AbstractRevision $revision ) {
 		$previousRevisionId = $revision->getPrevRevisionId();
@@ -342,7 +337,7 @@ abstract class AbstractQuery {
 		}
 
 		$currentRevisionId = $this->currentRevisionsCache[$cacheKey];
-		return $this->revisionCache[$currentRevisionId->getAlphadecimal()];
+		return $this->revisionCache[$currentRevisionId->getAlphaDecimal()];
 	}
 
 	/**
@@ -358,7 +353,7 @@ abstract class AbstractQuery {
 		$rootPostId = $this->getRootPostId( $revision );
 
 		if ( !isset( $this->postCache[$rootPostId->getAlphadecimal()] ) ) {
-			throw new \MWException( 'Did not load root post ' . $rootPostId->getAlphadecimal() );
+			throw new \MwException( 'Did not load root post ' . $rootPostId->getAlphadecimal() );
 		}
 
 		$rootPost = $this->postCache[$rootPostId->getAlphadecimal()];

@@ -39,7 +39,7 @@ class FlowSetUserIp extends LoggedUpdateMaintenance {
 			$hasRun = true;
 			$continue = "\0";
 			do {
-				$continue = $callback( $dbw, $continue );
+				$continue = call_user_func( $callback, $dbw, $continue );
 				$dbf->waitForSlaves();
 			} while ( $continue !== null );
 		};
@@ -70,7 +70,7 @@ class FlowSetUserIp extends LoggedUpdateMaintenance {
 	 * Refreshes a batch of recentchanges entries
 	 *
 	 * @param IDatabase $dbw
-	 * @param int|null $continue The next batch starting at rc_id
+	 * @param int[optional] $continue The next batch starting at rc_id
 	 * @return int Start id for the next batch
 	 */
 	public function updateWorkflow( IDatabase $dbw, $continue = null ) {
@@ -135,8 +135,7 @@ class FlowSetUserIp extends LoggedUpdateMaintenance {
 	public function updateRevision( IDatabase $dbw, $continue = null ) {
 		$rows = $dbw->select(
 			/* table */'flow_revision',
-			/* select */[ 'rev_id', 'rev_user_id', 'rev_user_text', 'rev_mod_user_id',
-				'rev_mod_user_text', 'rev_edit_user_id', 'rev_edit_user_text' ],
+			/* select */[ 'rev_id', 'rev_user_id', 'rev_user_text', 'rev_mod_user_id', 'rev_mod_user_text', 'rev_edit_user_id', 'rev_edit_user_text' ],
 			/* conditions */ [
 				'rev_id > ' . $dbw->addQuotes( $continue ),
 				$dbw->makeList(
@@ -189,5 +188,5 @@ class FlowSetUserIp extends LoggedUpdateMaintenance {
 	}
 }
 
-$maintClass = FlowSetUserIp::class; // Tells it to run the class
+$maintClass = 'FlowSetUserIp'; // Tells it to run the class
 require_once RUN_MAINTENANCE_IF_MAIN;

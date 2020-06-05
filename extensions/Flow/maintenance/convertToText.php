@@ -4,7 +4,6 @@ use Flow\Model\AbstractRevision;
 use Flow\Import\LiquidThreadsApi\ApiBackend;
 use Flow\Import\LiquidThreadsApi\RemoteApiBackend;
 use Flow\Import\LiquidThreadsApi\LocalApiBackend;
-use MediaWiki\MediaWikiServices;
 
 require_once getenv( 'MW_INSTALL_PATH' ) !== false
 	? getenv( 'MW_INSTALL_PATH' ) . '/maintenance/Maintenance.php'
@@ -23,7 +22,7 @@ class ConvertToText extends Maintenance {
 
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( "Converts a specific Flow page to text" );
+		$this->mDescription = "Converts a specific Flow page to text";
 
 		$this->addOption( 'page', 'The page to convert', true /*required*/ );
 		$this->addOption( 'remoteapi', 'The api of the wiki to convert the page from (or nothing, for local wiki)', false /*required*/ );
@@ -55,7 +54,8 @@ class ConvertToText extends Maintenance {
 			$flowData = $this->flowApi(
 				$this->pageTitle,
 				'view-topiclist',
-				$pagerParams + [ 'vtlformat' => 'wikitext', 'vtlsortby' => 'newest' ]
+				$pagerParams + [ 'vtlformat' => 'wikitext', 'vtlsortby' => 'newest' ],
+				'topiclist'
 			);
 
 			$topicListBlock = $flowData['topiclist'];
@@ -208,6 +208,8 @@ class ConvertToText extends Maintenance {
 	}
 
 	private function formatTimestamp( $timestamp ) {
+		global $wgContLang;
+
 		$timestamp = MWTimestamp::getLocalInstance( $timestamp );
 		$ts = $timestamp->format( 'YmdHis' );
 		$tzMsg = $timestamp->format( 'T' );  # might vary on DST changeover!
@@ -221,8 +223,7 @@ class ConvertToText extends Maintenance {
 			$tzMsg = $msg->text();
 		}
 
-		return MediaWikiServices::getInstance()->getContentLanguage()
-				->timeanddate( $ts, false, false ) . " ($tzMsg)";
+		return $wgContLang->timeanddate( $ts, false, false ) . " ($tzMsg)";
 	}
 
 	protected function pageExists( $pageName ) {
@@ -235,13 +236,13 @@ class ConvertToText extends Maintenance {
 		return $pages[$pageName];
 	}
 
-	private function getAllRevisions( Title $pageTitle, $submodule, $prefix, $responseRoot, array $params = [] ) {
+	private function getAllRevisions( Title $pageTitle, $submodule, $prefix, $responseRoot, $params = [] ) {
 		$headerRevisions = [];
 		$revId = false;
 		do {
 			$params[ $prefix . 'format' ] = 'wikitext';
 			if ( $revId ) {
-				$params[ $prefix . 'revId' ] = $revId;
+				$params[ $prefix .  'revId' ] = $revId;
 			}
 			$headerData = $this->flowApi(
 				$pageTitle,
@@ -269,6 +270,7 @@ class ConvertToText extends Maintenance {
 		$allRevisions, $sigForFirstAuthor = true, $msg = 'flow-edited-by',
 		$glueAfterContent = '', $glueBeforeAuthors = ' '
 	) {
+		global $wgContLang;
 		if ( count( $allRevisions ) ) {
 			$firstRevision = end( $allRevisions );
 			$latestRevision = reset( $allRevisions );
@@ -300,11 +302,11 @@ class ConvertToText extends Maintenance {
 				$signatures = array_map( [ $this, 'getSignature' ], $otherContributors );
 				$formattedAuthors .= ( $sigForFirstAuthor ? ' ' : '' ) . '(' .
 					wfMessage( $msg )->inContentLanguage()->params(
-						MediaWikiServices::getInstance()->getContentLanguage()->commaList( $signatures )
+						$wgContLang->commaList( $signatures )
 					)->text() . ')';
 			}
 
-			return $content . $glueAfterContent . ( $formattedAuthors === '' ? '' : $glueBeforeAuthors . $formattedAuthors );
+			return $content . $glueAfterContent .  ( $formattedAuthors === '' ? '' : $glueBeforeAuthors . $formattedAuthors );
 		}
 		return '';
 	}
@@ -331,5 +333,5 @@ class ConvertToText extends Maintenance {
 
 }
 
-$maintClass = ConvertToText::class;
+$maintClass = "ConvertToText";
 require_once RUN_MAINTENANCE_IF_MAIN;

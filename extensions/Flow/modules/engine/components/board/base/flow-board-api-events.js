@@ -2,7 +2,7 @@
  * @todo break this down into mixins for each callback section (eg. post actions, read topics)
  */
 
-( function () {
+( function ( $, mw ) {
 	/**
 	 * Binds API events to FlowBoardComponent
 	 * @class
@@ -355,7 +355,7 @@
 			flowBoard.emit( 'refreshTopic', workflowId, result );
 		} ).fail( function ( code, result ) {
 			var errorMsg = flowBoard.constructor.static.getApiErrorMessage( code, result );
-			errorMsg = mw.msg( 'flow-error-external', errorMsg );
+			errorMsg = mw.msg( 'flow-error-fetch-after-open-lock', errorMsg );
 
 			flowBoard.emitWithReturn( 'removeError', $target );
 			flowBoard.emitWithReturn( 'showError', $target, errorMsg );
@@ -369,4 +369,4 @@
 
 	// Mixin to FlowBoardComponent
 	mw.flow.mixinComponent( 'board', FlowBoardComponentApiEventsMixin );
-}() );
+}( jQuery, mediaWiki ) );

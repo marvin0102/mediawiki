@@ -1,4 +1,4 @@
-( function () {
+( function ( $ ) {
 	/**
 	 * Flow initialization system
 	 *
@@ -17,6 +17,7 @@
 	 * @cfg {string} [defaultSort] The current default sort order for topic list
 	 */
 	mw.flow.dm.System = function mwFlowDmSystem( config ) {
+
 		config = config || {};
 
 		// Mixin constructor
@@ -314,4 +315,4 @@
 	mw.flow.dm.System.prototype.getRenderedTopics = function () {
 		return this.renderedTopics;
 	};
-}() );
+}( jQuery ) );

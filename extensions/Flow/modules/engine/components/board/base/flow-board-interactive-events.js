@@ -2,7 +2,7 @@
  * Implements element interactive handler callbacks for FlowBoardComponent
  */
 
-( function () {
+( function ( $, mw ) {
 	/**
 	 * Binds element interactive (click) handlers for FlowBoardComponent
 	 * @param {jQuery} $container
@@ -48,11 +48,6 @@
 			return $deferred.resolve().promise();
 		}
 
-		// Ignore clicks on the editor
-		if ( $( event.target ).is( '.flow-ui-editorWidget *' ) ) {
-			return $deferred.resolve().promise();
-		}
-
 		if ( $target.is( '.flow-element-collapsed' ) ) {
 			$target.removeClass( 'flow-element-collapsed' ).addClass( 'flow-element-expanded' );
 			updateTitle( this, 'expanded' );
@@ -77,4 +72,4 @@
 
 	// Mixin to FlowBoardComponent
 	mw.flow.mixinComponent( 'board', FlowBoardComponentInteractiveEventsMixin );
-}() );
+}( jQuery, mediaWiki ) );

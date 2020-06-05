@@ -17,7 +17,6 @@ abstract class AbstractSummary extends AbstractRevision {
 	public static function fromStorageRow( array $row, $obj = null ) {
 		/** @var $obj AbstractSummary */
 		$obj = parent::fromStorageRow( $row, $obj );
-		// @phan-suppress-next-line PhanUndeclaredProperty Type not inferred
 		$obj->summaryTargetId = UUID::create( $row['rev_type_id'] );
 		return $obj;
 	}

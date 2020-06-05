@@ -133,7 +133,7 @@ class Pager {
 				// nothing found
 				break;
 			}
-			$filtered = $filter ? $filter( $found ) : $found;
+			$filtered = $filter ? call_user_func( $filter, $found ) : $found;
 			if ( $this->options['pager-dir'] === 'rev' ) {
 				// Paging A-Z with pager-offset F, pager-dir rev, pager-limit 2 gives
 				// DE on first query, BC on second, and A on third.  The output
@@ -161,12 +161,7 @@ class Pager {
 		if ( $queries >= self::MAX_QUERIES ) {
 			$count = count( $results );
 			$limit = $this->options['pager-limit'];
-			wfDebugLog(
-				'Flow',
-				__METHOD__ . "Reached maximum of $queries queries with $count results of $limit " .
-					"requested with query of " . json_encode( $this->query ) . ' and options ' .
-					json_encode( $options )
-			);
+			wfDebugLog( 'Flow', __METHOD__ . "Reached maximum of $queries queries with $count results of $limit requested with query of " . json_encode( $this->query ) . ' and options ' . json_encode( $options ) );
 		}
 
 		if ( $results ) {
@@ -181,7 +176,7 @@ class Pager {
 	 * @return PagerPage
 	 * @throws InvalidInputException
 	 */
-	protected function processPage( array $results ) {
+	protected function processPage( $results ) {
 		$pagingLinks = [];
 
 		// Retrieve paging links

@@ -90,7 +90,7 @@ abstract class FeatureIndex implements Index {
 	 * @param ObjectStorage $storage
 	 * @param ObjectMapper $mapper
 	 * @param string $prefix Prefix to utilize for all cache keys
-	 * @param string[] $indexedColumns List of columns to index
+	 * @param array $indexedColumns List of columns to index,
 	 */
 	public function __construct( FlowObjectCache $cache, ObjectStorage $storage, ObjectMapper $mapper, $prefix, array $indexedColumns ) {
 		$this->cache = $cache;
@@ -143,7 +143,7 @@ abstract class FeatureIndex implements Index {
 	 * @return string[]|false The columns to sort by, or false if no sorting is defined
 	 */
 	public function getSort() {
-		return $this->options['sort'] ?? false;
+		return isset( $this->options['sort'] ) ? $this->options['sort'] : false;
 	}
 
 	/**
@@ -201,9 +201,7 @@ abstract class FeatureIndex implements Index {
 		}
 		$oldCompacted = $this->rowCompactor->compactRow( UUID::convertUUIDs( $old, 'alphadecimal' ) );
 		$newCompacted = $this->rowCompactor->compactRow( UUID::convertUUIDs( $new, 'alphadecimal' ) );
-		$oldIndexedForComparison = UUID::convertUUIDs( $oldIndexed, 'alphadecimal' );
-		$newIndexedForComparison = UUID::convertUUIDs( $newIndexed, 'alphadecimal' );
-		if ( ObjectManager::arrayEquals( $oldIndexedForComparison, $newIndexedForComparison ) ) {
+		if ( ObjectManager::arrayEquals( $oldIndexed, $newIndexed ) ) {
 			if ( ObjectManager::arrayEquals( $oldCompacted, $newCompacted ) ) {
 				// Nothing changed in the index
 				return;
@@ -343,9 +341,9 @@ abstract class FeatureIndex implements Index {
 	 * to expand (= fetch from cache) - don't want to do this for more than
 	 * what is needed
 	 *
-	 * @param array[] $results
-	 * @param array $options
-	 * @return array[]
+	 * @param array $results
+	 * @param array[optional] $options
+	 * @return array
 	 */
 	protected function filterResults( array $results, array $options = [] ) {
 		// Overriden in TopKIndex
@@ -360,7 +358,7 @@ abstract class FeatureIndex implements Index {
 	 * additional data may be loaded at once.
 	 *
 	 * @param array $attributes Attributes to find()
-	 * @param array $options Options to find()
+	 * @param array[optional] $options Options to find()
 	 * @return bool
 	 */
 	public function found( array $attributes, array $options = [] ) {
@@ -375,7 +373,7 @@ abstract class FeatureIndex implements Index {
 	 * additional data may be loaded at once.
 	 *
 	 * @param array $queries Queries to findMulti()
-	 * @param array $options Options to findMulti()
+	 * @param array[optional] $options Options to findMulti()
 	 * @return bool
 	 */
 	public function foundMulti( array $queries, array $options = [] ) {
@@ -393,7 +391,6 @@ abstract class FeatureIndex implements Index {
 
 		// check if keys matching given queries are already known in local cache
 		foreach ( $cacheKeys as $key ) {
-			// @phan-suppress-next-line PhanUndeclaredMethod Checked with method_exists above
 			if ( !$this->cache->has( $key ) ) {
 				return false;
 			}
@@ -411,7 +408,7 @@ abstract class FeatureIndex implements Index {
 		// retrieve from cache - this is cheap, it's is local storage
 		$cached = $this->cache->getMulti( $cacheKeys );
 		foreach ( $cached as $i => $result ) {
-			$limit = $options['limit'] ?? $this->getLimit();
+			$limit = isset( $options['limit'] ) ? $options['limit'] : $this->getLimit();
 			$cached[$i] = array_splice( $result, 0, $limit );
 		}
 

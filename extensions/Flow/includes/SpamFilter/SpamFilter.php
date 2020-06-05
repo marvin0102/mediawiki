@@ -15,15 +15,8 @@ interface SpamFilter {
 	 * @param Title $title
 	 * @param Title $ownerTitle
 	 * @return Status
-	 * @suppress PhanParamReqAfterOpt Nullable, not optional
 	 */
-	public function validate(
-		IContextSource $context,
-		AbstractRevision $newRevision,
-		AbstractRevision $oldRevision = null,
-		Title $title,
-		Title $ownerTitle
-	);
+	public function validate( IContextSource $context, AbstractRevision $newRevision, AbstractRevision $oldRevision = null, Title $title, Title $ownerTitle );
 
 	/**
 	 * @return bool

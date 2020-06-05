@@ -62,7 +62,7 @@ class UserNameBatch {
 	/**
 	 * @param string $wiki
 	 * @param int $userId
-	 * @param string|null $userName Non null to set known usernames like $wgUser
+	 * @param string $userName Non null to set known usernames like $wgUser
 	 */
 	public function add( $wiki, $userId, $userName = null ) {
 		$userId = (int)$userId;

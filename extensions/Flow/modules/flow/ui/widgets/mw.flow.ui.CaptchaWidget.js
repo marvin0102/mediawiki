@@ -1,4 +1,4 @@
-( function () {
+( function ( $ ) {
 	/**
 	 * This implements the UI portion of the CAPTCHA.
 	 *
@@ -10,8 +10,7 @@
 	 * @param {Object} [config]
 	 */
 	mw.flow.ui.CaptchaWidget = function mwFlowUiCaptchaWidget( model, config ) {
-		// Parent constructor
-		mw.flow.ui.CaptchaWidget.super.call( this, config );
+		mw.flow.ui.CaptchaWidget.parent.call( this, config );
 
 		this.toggle( false );
 
@@ -65,7 +64,7 @@
 
 		if ( isRequired ) {
 			if ( renderingInformation.headitems ) {
-				$( document.head ).append( renderingInformation.headitems.join( '' ) );
+				$( 'head' ).append( renderingInformation.headitems.join( '' ) );
 			}
 
 			moduleStyles = renderingInformation.modulestyles || [];
@@ -83,4 +82,4 @@
 			this.setLabel( '' );
 		}
 	};
-}() );
+}( jQuery ) );

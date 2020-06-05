@@ -1,7 +1,5 @@
 <?php
 
-use MediaWiki\MediaWikiServices;
-
 require_once getenv( 'MW_INSTALL_PATH' ) !== false
 	? getenv( 'MW_INSTALL_PATH' ) . '/maintenance/Maintenance.php'
 	: __DIR__ . '/../../../maintenance/Maintenance.php';
@@ -28,8 +26,8 @@ class FlowCreateTemplates extends LoggedUpdateMaintenance {
 			// Template:FlowMention, used to render mentions in Flow's Visual Editor
 			'flow-ve-mention-template-title' => function ( Title $title ) {
 				// get "User:" namespace prefix in wiki language
-				$namespaces = MediaWikiServices::getInstance()->getContentLanguage()
-					->getFormattedNamespaces();
+				global $wgContLang;
+				$namespaces = $wgContLang->getFormattedNamespaces();
 
 				return '@[[' . $namespaces[NS_USER] . ':{{{1|Example}}}|{{{2|{{{1|Example}}}}}}]]';
 			},
@@ -62,7 +60,7 @@ class FlowCreateTemplates extends LoggedUpdateMaintenance {
 	public function __construct() {
 		parent::__construct();
 
-		$this->addDescription( "Creates templates required by Flow" );
+		$this->mDescription = "Creates templates required by Flow";
 
 		$this->requireExtension( 'Flow' );
 	}
@@ -118,5 +116,5 @@ class FlowCreateTemplates extends LoggedUpdateMaintenance {
 	}
 }
 
-$maintClass = FlowCreateTemplates::class;
+$maintClass = 'FlowCreateTemplates';
 require_once RUN_MAINTENANCE_IF_MAIN;

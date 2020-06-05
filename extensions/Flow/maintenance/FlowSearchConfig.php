@@ -30,8 +30,6 @@ require_once __DIR__ . '/../../CirrusSearch/includes/Maintenance/Maintenance.php
  * Similar to CirrusSearch's UpdateOneSearchIndexConfig.
  *
  * @ingroup Maintenance
- * @phan-file-suppress PhanUndeclaredClassMethod,PhanTypeMismatchArgument,PhanUndeclaredStaticMethod
- * @phan-file-suppress PhanParamTooFew,PhanUndeclaredMethod This script is outdated, T227563
  */
 class FlowSearchConfig extends Maintenance {
 	/**
@@ -40,7 +38,7 @@ class FlowSearchConfig extends Maintenance {
 	protected $indexType;
 
 	/**
-	 * @var array|string
+	 * @var array
 	 */
 	protected $maxShardsPerNode;
 
@@ -168,7 +166,7 @@ class FlowSearchConfig extends Maintenance {
 			"to the current time in seconds which should give you a unique identifier.", false, true );
 		$this->addOption( 'reindexAndRemoveOk', "If the alias is held by another index then " .
 			"reindex all documents from that index (via the alias) to this one, swing the " .
-			"alias to this index, and then remove other index.  You'll have to redo all updates " .
+			"alias to this index, and then remove other index.  You'll have to redo all updates ".
 			"performed during this operation manually.  Defaults to false." );
 		$this->addOption( 'reindexProcesses', 'Number of processes to use in reindex.  ' .
 			'Not supported on Windows.  Defaults to 1 on Windows and 5 otherwise.', false, true );
@@ -225,18 +223,15 @@ class FlowSearchConfig extends Maintenance {
 		$this->indexAllocation = $wgFlowSearchIndexAllocation;
 		$this->maintenanceTimeout = $wgFlowSearchMaintenanceTimeout;
 		$this->refreshInterval = $wgFlowSearchRefreshInterval;
-		$this->maxShardsPerNode = $wgFlowSearchMaxShardsPerNode[$this->indexType] ?? 'unlimited';
-		$this->cacheWarmers = $wgFlowSearchCacheWarmers[$this->indexType] ?? [];
+		$this->maxShardsPerNode = isset( $wgFlowSearchMaxShardsPerNode[$this->indexType] ) ? $wgFlowSearchMaxShardsPerNode[$this->indexType] : 'unlimited';
+		$this->cacheWarmers = isset( $wgFlowSearchCacheWarmers[$this->indexType] ) ? $wgFlowSearchCacheWarmers[$this->indexType] : [];
 
-		$this->indexIdentifier = $this->utils->pickIndexIdentifierFromOption(
-			$this->getOption( 'indexIdentifier', 'current' ), $this->getIndexTypeName() );
-		$this->reindexAcceptableCountDeviation = Util::parsePotentialPercent( $this->getOption(
-			'reindexAcceptableCountDeviation', '5%' ) );
+		$this->indexIdentifier = $this->utils->pickIndexIdentifierFromOption( $this->getOption( 'indexIdentifier', 'current' ), $this->getIndexTypeName() );
+		$this->reindexAcceptableCountDeviation = Util::parsePotentialPercent( $this->getOption( 'reindexAcceptableCountDeviation', '5%' ) );
 		$this->availablePlugins = $this->utils->scanAvailablePlugins( $this->bannedPlugins );
 		$this->analysisConfigBuilder = $this->pickAnalyzer( $this->langCode, $this->availablePlugins );
 
-		$this->tooFewReplicas = $this->reindexAndRemoveOk
-			&& ( $this->startOver || !$this->getIndex()->exists() );
+		$this->tooFewReplicas = $this->reindexAndRemoveOk && ( $this->startOver || !$this->getIndex()->exists() );
 	}
 
 	/**
@@ -250,8 +245,7 @@ class FlowSearchConfig extends Maintenance {
 		$validators[] = new NumberOfShardsValidator( $this->getIndex(), $this->getShardCount(), $this );
 		$validators[] = new ReplicaRangeValidator( $this->getIndex(), $this->getReplicaCount(), $this );
 		$validators[] = new ShardAllocationValidator( $this->getIndex(), $this->indexAllocation, $this );
-		$validators[] = new MaxShardsPerNodeValidator( $this->getIndex(), $this->indexType,
-			$this->maxShardsPerNode, $this );
+		$validators[] = new MaxShardsPerNodeValidator( $this->getIndex(), $this->indexType, $this->maxShardsPerNode, $this );
 
 		return $validators;
 	}
@@ -263,31 +257,17 @@ class FlowSearchConfig extends Maintenance {
 		$validators = [];
 
 		if ( $this->getOption( 'justCacheWarmers', false ) ) {
-			$validators[] = new CacheWarmersValidator(
-				$this->indexType, $this->getTopicType(), $this->cacheWarmers, $this );
-			$validators[] = new CacheWarmersValidator(
-				$this->indexType, $this->getHeaderType(), $this->cacheWarmers, $this );
+			$validators[] = new CacheWarmersValidator( $this->indexType, $this->getTopicType(), $this->cacheWarmers, $this );
+			$validators[] = new CacheWarmersValidator( $this->indexType, $this->getHeaderType(), $this->cacheWarmers, $this );
 			return $validators;
 		}
 
 		if ( $this->getOption( 'justAllocation', false ) ) {
-			$validators[] = new ShardAllocationValidator(
-				$this->getIndex(), $this->indexAllocation, $this );
+			$validators[] = new ShardAllocationValidator( $this->getIndex(), $this->indexAllocation, $this );
 			return $validators;
 		}
 
-		$validators[] = new IndexValidator(
-			$this->getIndex(),
-			$this->startOver,
-			$this->maxShardsPerNode,
-			$this->getShardCount(),
-			$this->getReplicaCount(),
-			$this->refreshInterval,
-			false,
-			$this->analysisConfigBuilder,
-			$this->getMergeSettings(),
-			$this
-		);
+		$validators[] = new IndexValidator( $this->getIndex(), $this->startOver, $this->maxShardsPerNode, $this->getShardCount(), $this->getReplicaCount(), $this->refreshInterval, false, $this->analysisConfigBuilder, $this->getMergeSettings(), $this );
 
 		$validators = array_merge( $validators, $this->getIndexSettingsValidators() );
 
@@ -296,65 +276,21 @@ class FlowSearchConfig extends Maintenance {
 		$validators[] = $validator;
 
 		$types = [ 'topic' => $this->getTopicType(), 'header' => $this->getHeaderType() ];
-		$validator = new MappingValidator(
-			$this->getIndex(),
-			$this->optimizeIndexForExperimentalHighlighter,
-			$this->availablePlugins,
-			$this->getMappingConfig(),
-			$types,
-			$this
-		);
+		$validator = new MappingValidator( $this->getIndex(), $this->optimizeIndexForExperimentalHighlighter, $this->availablePlugins, $this->getMappingConfig(), $types, $this );
 		$validator->printDebugCheckConfig( $this->printDebugCheckConfig );
 		$validators[] = $validator;
 
-		$validators[] = new CacheWarmersValidator(
-			$this->indexType, $this->getTopicType(), $this->cacheWarmers, $this );
-		$validators[] = new CacheWarmersValidator(
-			$this->indexType, $this->getHeaderType(), $this->cacheWarmers, $this );
+		$validators[] = new CacheWarmersValidator( $this->indexType, $this->getTopicType(), $this->cacheWarmers, $this );
+		$validators[] = new CacheWarmersValidator( $this->indexType, $this->getHeaderType(), $this->cacheWarmers, $this );
 
 		$types = [ $this->getTopicType(), $this->getHeaderType() ];
 		$oldTypes = [ $this->getOldTopicType(), $this->getOldHeaderType() ];
-		$reindexer = new Reindexer(
-			$this->getIndex(),
-			Connection::getSingleton(),
-			$types,
-			$oldTypes,
-			$this->getShardCount(),
-			$this->getReplicaCount(),
-			$this->maintenanceTimeout,
-			$this->getMergeSettings(),
-			$this->getMappingConfig(),
-			$this
-		);
-		$reindexParams = [
-			$this->reindexProcesses,
-			$this->refreshInterval,
-			$this->reindexRetryAttempts,
-			$this->reindexChunkSize,
-			$this->reindexAcceptableCountDeviation
-		];
+		$reindexer = new Reindexer( $this->getIndex(), Connection::getSingleton(), $types, $oldTypes, $this->getShardCount(), $this->getReplicaCount(), $this->maintenanceTimeout, $this->getMergeSettings(), $this->getMappingConfig(), $this );
+		$reindexParams = [ $this->reindexProcesses, $this->refreshInterval, $this->reindexRetryAttempts, $this->reindexChunkSize, $this->reindexAcceptableCountDeviation ];
 		$reindexValidators = $this->getIndexSettingsValidators();
-		$validators[] = new SpecificAliasValidator(
-			$this->getClient(),
-			$this->getIndexTypeName(),
-			$this->getSpecificIndexName(),
-			$this->startOver,
-			$reindexer,
-			$reindexParams,
-			$reindexValidators,
-			$this->reindexAndRemoveOk,
-			$this->tooFewReplicas,
-			$this
-		);
+		$validators[] = new SpecificAliasValidator( $this->getClient(), $this->getIndexTypeName(), $this->getSpecificIndexName(), $this->startOver, $reindexer, $reindexParams, $reindexValidators, $this->reindexAndRemoveOk, $this->tooFewReplicas, $this );
 
-		$validators[] = new IndexAllAliasValidator(
-			$this->getClient(),
-			$this->getIndexName(),
-			$this->getSpecificIndexName(),
-			$this->startOver,
-			$this->getIndexTypeName(),
-			$this
-		);
+		$validators[] = new IndexAllAliasValidator( $this->getClient(), $this->getIndexName(), $this->getSpecificIndexName(), $this->startOver, $this->getIndexTypeName(), $this );
 		if ( $this->tooFewReplicas ) {
 			$validators = array_merge( $validators, $this->getIndexSettingsValidators() );
 		}
@@ -390,9 +326,7 @@ class FlowSearchConfig extends Maintenance {
 				}
 			}
 
-			// @todo: might need this some day?
-			// (see CirrusSearch's UpdateOneSearchIndexConfig::updateVersions)
-			// $this->updateVersions();
+			// $this->updateVersions(); // @todo: might need this some day? (see CirrusSearch's UpdateOneSearchIndexConfig::updateVersions)
 		} catch ( \Elastica\Exception\Connection\HttpException $e ) {
 			$message = $e->getMessage();
 			$this->output( "\nUnexpected Elasticsearch failure.\n" );
@@ -402,8 +336,7 @@ class FlowSearchConfig extends Maintenance {
 			$message = ElasticsearchIntermediary::extractMessage( $e );
 			$trace = $e->getTraceAsString();
 			$this->output( "\nUnexpected Elasticsearch failure.\n" );
-			$this->error( "Elasticsearch failed in an unexpected way.  " .
-				"This is always a bug in FlowSearch.\n" .
+			$this->error( "Elasticsearch failed in an unexpected way.  This is always a bug in FlowSearch.\n" .
 				"Error type: $type\n" .
 				"Message: $message\n" .
 				"Trace:\n" . $trace, 1 );
@@ -414,8 +347,8 @@ class FlowSearchConfig extends Maintenance {
 		global $wgFlowSearchShardCount;
 
 		if ( !isset( $wgFlowSearchShardCount[$this->indexType] ) ) {
-			$this->error( 'Could not find a shard count for ' . $this->indexType .
-				'.  Did you forget to add it ' . 'to $wgFlowSearchShardCount?', 1 );
+			$this->error( 'Could not find a shard count for ' . $this->indexType . '.  Did you forget to add it ' .
+				'to $wgFlowSearchShardCount?', 1 );
 		}
 
 		return $wgFlowSearchShardCount[$this->indexType];
@@ -454,8 +387,7 @@ class FlowSearchConfig extends Maintenance {
 	 */
 	protected function pickAnalyzer( $langCode, array $availablePlugins = [] ) {
 		$analysisConfigBuilder = new AnalysisConfigBuilder( $langCode, $availablePlugins );
-		$this->outputIndented( 'Picking analyzer...' .
-			$analysisConfigBuilder->getDefaultTextAnalyzerType() . "\n" );
+		$this->outputIndented( 'Picking analyzer...' . $analysisConfigBuilder->getDefaultTextAnalyzerType() . "\n" );
 		return $analysisConfigBuilder;
 	}
 
@@ -472,8 +404,7 @@ class FlowSearchConfig extends Maintenance {
 	}
 
 	protected function getIndex() {
-		return $this->connection->getIndex(
-			$this->indexBaseName, $this->indexType, $this->indexIdentifier );
+		return $this->connection->getIndex( $this->indexBaseName, $this->indexType, $this->indexIdentifier );
 	}
 
 	protected function getIndexName() {
@@ -481,8 +412,7 @@ class FlowSearchConfig extends Maintenance {
 	}
 
 	protected function getSpecificIndexName() {
-		return $this->connection->getIndexName(
-			$this->indexBaseName, $this->indexType, $this->indexIdentifier );
+		return $this->connection->getIndexName( $this->indexBaseName, $this->indexType, $this->indexIdentifier );
 	}
 
 	protected function getIndexTypeName() {
@@ -516,5 +446,5 @@ class FlowSearchConfig extends Maintenance {
 	}
 }
 
-$maintClass = FlowSearchConfig::class;
+$maintClass = 'FlowSearchConfig';
 require_once RUN_MAINTENANCE_IF_MAIN;

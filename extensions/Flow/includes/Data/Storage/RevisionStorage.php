@@ -106,7 +106,7 @@ abstract class RevisionStorage extends DbStorage {
 
 	/**
 	 * Find one by specific attributes
-	 * @todo this method can probably be generalized in parent class?
+	 * @todo: this method can probably be generalized in parent class?
 	 * @param array $attributes
 	 * @param array $options
 	 * @return mixed
@@ -144,8 +144,7 @@ abstract class RevisionStorage extends DbStorage {
 			$tables, '*', $this->preprocessSqlArray( $attributes ), __METHOD__, $options, $joins
 		);
 		if ( $res === false ) {
-			throw new DataModelException( __METHOD__ . ': Query failed: ' . $dbr->lastError(),
-				'process-data' );
+			throw new DataModelException( __METHOD__ . ': Query failed: ' . $dbr->lastError(), 'process-data' );
 		}
 
 		$retval = [];
@@ -252,14 +251,12 @@ abstract class RevisionStorage extends DbStorage {
 		$res = $dbr->select(
 			[ 'flow_revision' ],
 			[ 'rev_id' => "MAX( 'rev_id' )" ],
-			[ 'rev_type' => $this->getRevType() ] + $this->preprocessSqlArray(
-				$this->buildCompositeInCondition( $dbr, $duplicator->getUniqueQueries() ) ),
+			[ 'rev_type' => $this->getRevType() ] + $this->preprocessSqlArray( $this->buildCompositeInCondition( $dbr, $duplicator->getUniqueQueries() ) ),
 			__METHOD__,
 			[ 'GROUP BY' => 'rev_type_id' ]
 		);
 		if ( $res === false ) {
-			throw new DataModelException( __METHOD__ . ': Query failed: ' . $dbr->lastError(),
-				'process-data' );
+			throw new DataModelException( __METHOD__ . ': Query failed: ' . $dbr->lastError(), 'process-data' );
 		}
 
 		$revisionIds = [];
@@ -302,8 +299,7 @@ abstract class RevisionStorage extends DbStorage {
 				$joins
 			);
 			if ( $res === false ) {
-				throw new DataModelException( __METHOD__ . ': Query failed: ' . $dbr->lastError(),
-					'process-data' );
+				throw new DataModelException( __METHOD__ . ': Query failed: ' . $dbr->lastError(), 'process-data' );
 			}
 
 			foreach ( $res as $row ) {
@@ -385,11 +381,15 @@ abstract class RevisionStorage extends DbStorage {
 		}
 
 		$dbw = $this->dbFactory->getDB( DB_MASTER );
-		$dbw->insert(
+		$res = $dbw->insert(
 			'flow_revision',
 			$this->preprocessNestedSqlArray( $revisions ),
 			__METHOD__
 		);
+		if ( !$res ) {
+			// throw exception?
+			return false;
+		}
 
 		return $this->insertRelated( $rows );
 	}
@@ -423,8 +423,7 @@ abstract class RevisionStorage extends DbStorage {
 
 		// we're only able to update part of the columns required to update content
 		if ( $diff !== $requiredColumnNames ) {
-			throw new DataModelException( "Allowed update column configuration is inconsistent",
-				'allowed-update-inconsistent' );
+			throw new DataModelException( "Allowed update column configuration is inconsistent", 'allowed-update-inconsistent' );
 		}
 
 		// content changes aren't allowed
@@ -521,13 +520,13 @@ abstract class RevisionStorage extends DbStorage {
 
 		if ( $rev ) {
 			$dbw = $this->dbFactory->getDB( DB_MASTER );
-			$dbw->update(
+			$res = $dbw->update(
 				'flow_revision',
 				$this->preprocessSqlArray( $rev ),
 				$this->preprocessSqlArray( [ 'rev_id' => $old['rev_id'] ] ),
 				__METHOD__
 			);
-			if ( !$dbw->affectedRows() ) {
+			if ( !( $res && $dbw->affectedRows() ) ) {
 				return false;
 			}
 		}
@@ -579,7 +578,7 @@ abstract class RevisionStorage extends DbStorage {
 	 * columns.
 	 *
 	 * @param array $row Rows to split
-	 * @param string $prefix
+	 * @param string[optional] $prefix
 	 * @return array Remaining rows
 	 */
 	protected function splitUpdate( array $row, $prefix = 'rev' ) {

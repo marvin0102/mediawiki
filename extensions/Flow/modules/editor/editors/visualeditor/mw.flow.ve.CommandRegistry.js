@@ -1,4 +1,4 @@
-( function () {
+( function ( ve ) {
 	'use strict';
 
 	ve.ui.commandRegistry.register(
@@ -18,4 +18,4 @@
 			{ args: [ 'flowMention', { selectAt: true } ], supportedSelections: [ 'linear' ] }
 		)
 	);
-}() );
+}( ve ) );

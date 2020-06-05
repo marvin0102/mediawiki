@@ -72,7 +72,6 @@ class ContributionsFormatter extends AbstractFormatter {
 			return '';
 		}
 
-		// @phan-suppress-next-line PhanUndeclaredMethod Phan doesn't infer $row->revision is PostRevision
 		$type = $row->revision->isTopicTitle() ? 'topic' : 'post';
 
 		if ( isset( $data['actions']['hide'] ) ) {
@@ -89,7 +88,7 @@ class ContributionsFormatter extends AbstractFormatter {
 
 		/** @var Anchor $anchor */
 		$anchor = $data['actions'][$key];
-		$message = ' ' . $ctx->msg( 'parentheses' )->rawParams( Html::rawElement(
+		$message = ' ' . wfMessage( 'parentheses' )->rawParams( Html::rawElement(
 			'a',
 			[
 				'href' => $anchor->getFullURL(),

@@ -18,7 +18,7 @@ class FlowUpdateRevisionTypeId extends LoggedUpdateMaintenance {
 
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( "Update flow_revision.rev_type_id" );
+		$this->mDescription = "Update flow_revision.rev_type_id";
 		$this->requireExtension( 'Flow' );
 		$this->setBatchSize( 300 );
 	}
@@ -104,5 +104,5 @@ class FlowUpdateRevisionTypeId extends LoggedUpdateMaintenance {
 	}
 }
 
-$maintClass = FlowUpdateRevisionTypeId::class;
+$maintClass = 'FlowUpdateRevisionTypeId';
 require_once RUN_MAINTENANCE_IF_MAIN;

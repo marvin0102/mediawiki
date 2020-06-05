@@ -19,10 +19,10 @@ class FlowUpdateRevisionContentLength extends LoggedUpdateMaintenance {
 	 *
 	 * @var string[]
 	 */
-	private static $revisionTypes = [
-		'post' => \Flow\Model\PostRevision::class,
-		'header' => \Flow\Model\Header::class,
-		'post-summary' => \Flow\Model\PostSummary::class,
+	static private $revisionTypes = [
+		'post' => 'Flow\Model\PostRevision',
+		'header' => 'Flow\Model\Header',
+		'post-summary' => 'Flow\Model\PostSummary',
 	];
 
 	/**
@@ -47,7 +47,7 @@ class FlowUpdateRevisionContentLength extends LoggedUpdateMaintenance {
 
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( "Updates content length for revisions with unset content length." );
+		$this->mDescription = "Updates content length for revisions with unset content length.";
 		$this->requireExtension( 'Flow' );
 	}
 
@@ -61,19 +61,19 @@ class FlowUpdateRevisionContentLength extends LoggedUpdateMaintenance {
 		$this->dbFactory = Container::get( 'db.factory' );
 		$this->storage = Container::get( 'storage' );
 		// Since this is a one-shot maintenance script just reach in via reflection
-		// to change lengths
+		// to change lenghts
 		$this->contentLengthProperty = new ReflectionProperty(
-			AbstractRevision::class,
+			'Flow\Model\AbstractRevision',
 			'contentLength'
 		);
 		$this->contentLengthProperty->setAccessible( true );
 		$this->previousContentLengthProperty = new ReflectionProperty(
-			AbstractRevision::class,
+			'Flow\Model\AbstractRevision',
 			'previousContentLength'
 		);
 		$this->previousContentLengthProperty->setAccessible( true );
 
-		$dbw = $this->dbFactory->getDB( DB_MASTER );
+		$dbw = $this->dbFactory->getDb( DB_MASTER );
 		// Walk through the flow_revision table
 		$it = new BatchRowIterator(
 			$dbw,
@@ -111,8 +111,7 @@ class FlowUpdateRevisionContentLength extends LoggedUpdateMaintenance {
 				} else {
 					$previous = $om->get( $obj->getPrevRevisionId() );
 					if ( !$previous ) {
-						$this->output( 'Could not locate previous revision: ' .
-							$obj->getPrevRevisionId()->getAlphadecimal() );
+						$this->output( 'Could not locate previous revision: ' . $obj->getPrevRevisionId()->getAlphadecimal() );
 						$fail++;
 						continue;
 					}
@@ -124,10 +123,8 @@ class FlowUpdateRevisionContentLength extends LoggedUpdateMaintenance {
 					$om->put( $obj );
 				} catch ( \Exception $e ) {
 					$this->error(
-						'Failed to update revision ' . $obj->getRevisionId()->getAlphadecimal() .
-							': ' . $e->getMessage() . "\n" .
-						'Please make sure rev_content, rev_content_length, rev_flags & ' .
-							'rev_previous_content_length are part of RevisionStorage::$allowedUpdateColumns.'
+						'Failed to update revision ' . $obj->getRevisionId()->getAlphadecimal() . ': ' . $e->getMessage() . "\n".
+						'Please make sure rev_content, rev_content_length, rev_flags & rev_previous_content_length are part of RevisionStorage::$allowedUpdateColumns.'
 					);
 					throw $e;
 				}
@@ -163,5 +160,5 @@ class FlowUpdateRevisionContentLength extends LoggedUpdateMaintenance {
 	}
 }
 
-$maintClass = FlowUpdateRevisionContentLength::class;
+$maintClass = 'FlowUpdateRevisionContentLength';
 require_once RUN_MAINTENANCE_IF_MAIN;

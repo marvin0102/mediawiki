@@ -210,10 +210,7 @@ class RevisionIterator implements Iterator {
 	/** @var IImportObject **/
 	protected $parent;
 
-	/** @var callable */
-	protected $factory;
-
-	public function __construct( array $pageData, IImportObject $parent, callable $factory ) {
+	public function __construct( array $pageData, IImportObject $parent, $factory ) {
 		$this->pageData = $pageData;
 		$this->pointer = 0;
 		$this->parent = $parent;
@@ -245,6 +242,10 @@ class RevisionIterator implements Iterator {
 	}
 
 	public function current() {
-		return ( $this->factory )( $this->pageData['revisions'][$this->pointer], $this->parent );
+		return call_user_func(
+			$this->factory,
+			$this->pageData['revisions'][$this->pointer],
+			$this->parent
+		);
 	}
 }

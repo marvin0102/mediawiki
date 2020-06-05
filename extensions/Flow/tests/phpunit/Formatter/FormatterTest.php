@@ -45,9 +45,7 @@ class FormatterTest extends FlowTestCase {
 	}
 
 	/**
-	 * @covers \Flow\Formatter\CheckUserFormatter
 	 * @dataProvider checkUserProvider
-	 * @group Broken
 	 */
 	public function testCheckUserFormatter( $message, $test, $action, UUID $workflowId, UUID $revId, UUID $postId = null ) {
 		global $wgLang;
@@ -63,7 +61,7 @@ class FormatterTest extends FlowTestCase {
 		$row->revision = $this->mockRevision( $action, $revId, $postId );
 		$row->currentRevision = $row->revision;
 
-		$ctx = $this->getMock( \IContextSource::class );
+		$ctx = $this->getMock( 'IContextSource' );
 		$ctx->expects( $this->any() )
 			->method( 'getLanguage' )
 			->will( $this->returnValue( $wgLang ) );
@@ -74,13 +72,13 @@ class FormatterTest extends FlowTestCase {
 		// Code uses wfWarn as a louder wfDebugLog in error conditions.
 		// but phpunit considers a warning a fail.
 		\Wikimedia\suppressWarnings();
-		$links = $this->createFormatter( \Flow\Formatter\CheckUserFormatter::class )->format( $row, $ctx );
+		$links = $this->createFormatter( 'Flow\Formatter\CheckUserFormatter' )->format( $row, $ctx );
 		\Wikimedia\restoreWarnings();
 		$test( $this, $message, $links );
 	}
 
 	protected function mockWorkflow( UUID $workflowId, Title $title ) {
-		$workflow = $this->getMock( \Flow\Model\Workflow::class );
+		$workflow = $this->getMock( 'Flow\\Model\\Workflow' );
 		$workflow->expects( $this->any() )
 			->method( 'getId' )
 			->will( $this->returnValue( $workflowId ) );
@@ -92,9 +90,9 @@ class FormatterTest extends FlowTestCase {
 
 	protected function mockRevision( $changeType, UUID $revId, UUID $postId = null ) {
 		if ( $postId ) {
-			$revision = $this->getMock( \Flow\Model\PostRevision::class );
+			$revision = $this->getMock( 'Flow\\Model\\PostRevision' );
 		} else {
-			$revision = $this->getMock( \Flow\Model\Header::class );
+			$revision = $this->getMock( 'Flow\\Model\\Header' );
 		}
 		$revision->expects( $this->any() )
 			->method( 'getChangeType' )
@@ -111,7 +109,7 @@ class FormatterTest extends FlowTestCase {
 	}
 
 	protected function createFormatter( $class ) {
-		$permissions = $this->getMockBuilder( \Flow\RevisionActionPermissions::class )
+		$permissions = $this->getMockBuilder( 'Flow\RevisionActionPermissions' )
 			->disableOriginalConstructor()
 			->getMock();
 		$permissions->expects( $this->any() )
@@ -121,10 +119,10 @@ class FormatterTest extends FlowTestCase {
 			->method( 'getActions' )
 			->will( $this->returnValue( Container::get( 'flow_actions' ) ) );
 
-		$templating = $this->getMockBuilder( \Flow\Templating::class )
+		$templating = $this->getMockBuilder( 'Flow\Templating' )
 			->disableOriginalConstructor()
 			->getMock();
-		$workflowMapper = $this->getMockBuilder( \Flow\Data\Mapper\CachingObjectMapper::class )
+		$workflowMapper = $this->getMockBuilder( 'Flow\Data\Mapper\CachingObjectMapper' )
 			->disableOriginalConstructor()
 			->getMock();
 		$urlGenerator = new UrlGenerator( $workflowMapper );
@@ -132,7 +130,7 @@ class FormatterTest extends FlowTestCase {
 			->method( 'getUrlGenerator' )
 			->will( $this->returnValue( $urlGenerator ) );
 
-		$usernames = $this->getMockBuilder( \Flow\Repository\UserNameBatch::class )
+		$usernames = $this->getMockBuilder( 'Flow\Repository\UserNameBatch' )
 			->disableOriginalConstructor()
 			->getMock();
 

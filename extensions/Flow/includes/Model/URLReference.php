@@ -66,7 +66,7 @@ class URLReference extends Reference {
 	/**
 	 * Gets the storage row from an object.
 	 * Helper for BasicObjectMapper.
-	 * @param URLReference $object
+	 * @param WikiReference $object
 	 * @return array
 	 */
 	public static function toStorageRow( URLReference $object ) {

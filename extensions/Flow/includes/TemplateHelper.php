@@ -6,7 +6,7 @@ use Flow\Exception\FlowException;
 use Flow\Exception\WrongNumberArgumentsException;
 use Flow\Model\UUID;
 use Closure;
-use Html;
+use HTML;
 use OOUI\IconWidget;
 use LightnCandy;
 use MWTimestamp;
@@ -40,7 +40,7 @@ class TemplateHelper {
 	}
 
 	/**
-	 * Constructs the location of the source handlebars template
+	 * Constructs the location of the the source handlebars template
 	 * and the compiled php code that goes with it.
 	 *
 	 * @param string $templateName
@@ -77,7 +77,7 @@ class TemplateHelper {
 	 *
 	 * @param string $templateName
 	 *
-	 * @return callable
+	 * @return Closure
 	 * @throws FlowException
 	 * @throws \Exception
 	 */
@@ -153,7 +153,6 @@ class TemplateHelper {
 					'escapeContent' => 'Flow\TemplateHelper::escapeContent',
 					'enablePatrollingLink' => 'Flow\TemplateHelper::enablePatrollingLink',
 					'oouify' => 'Flow\TemplateHelper::oouify',
-					'getSaveOrPublishMessage' => 'Flow\TemplateHelper::getSaveOrPublishMessage',
 				],
 				'hbhelpers' => [
 					'eachPost' => 'Flow\TemplateHelper::eachPost',
@@ -175,7 +174,7 @@ class TemplateHelper {
 	 *
 	 * @return string
 	 */
-	public static function processTemplate( $templateName, array $args, array $scopes = [] ) {
+	public static function processTemplate( $templateName, $args, array $scopes = [] ) {
 		// Undesirable, but lightncandy helpers have to be static methods
 		/** @var TemplateHelper $lightncandy */
 		$lightncandy = Container::get( 'lightncandy' );
@@ -185,7 +184,7 @@ class TemplateHelper {
 		if ( !array_key_exists( 'rootBlock', $args ) ) {
 			$args['rootBlock'] = $args;
 		}
-		return $template( $args, $scopes );
+		return call_user_func( $template, $args, $scopes );
 	}
 
 	// Helpers
@@ -226,13 +225,16 @@ class TemplateHelper {
 		if ( count( $args ) < 1 || count( $args ) > 2 ) {
 			throw new WrongNumberArgumentsException( $args, 'one', 'two' );
 		}
-		return self::timestamp( $args[0] );
+		return self::timestamp(
+			$args[0],
+			isset( $args[1] ) ? $args[1] : false
+		);
 	}
 
 	/**
 	 * @param int $timestamp milliseconds since the unix epoch
 	 *
-	 * @return string[]|false
+	 * @return string|false
 	 */
 	protected static function timestamp( $timestamp ) {
 		global $wgLang, $wgUser;
@@ -276,7 +278,7 @@ class TemplateHelper {
 	 * @return string[] array(html, 'raw')
 	 */
 	public static function htmlHelper( array $args, array $named ) {
-		return self::html( $args[0] ?? 'undefined' );
+		return self::html( isset( $args[0] ) ? $args[0] : 'undefined' );
 	}
 
 	/**
@@ -303,15 +305,15 @@ class TemplateHelper {
 
 	/**
 	 * @param array $context The 'this' value of the calling context
-	 * @param mixed $postIds List of ids (roots)
+	 * @param array $postIds List of ids (roots)
 	 * @param array $options blockhelper specific invocation options
 	 *
 	 * @return null|string HTML
 	 * @throws FlowException When callbacks are not Closure instances
 	 */
-	public static function eachPost( array $context, $postIds, array $options ) {
+	public static function eachPost( $context, $postIds, $options ) {
 		/** @var callable $inverse */
-		$inverse = $options['inverse'] ?? null;
+		$inverse = isset( $options['inverse'] ) ? $options['inverse'] : null;
 		/** @var callable $fn */
 		$fn = $options['fn'];
 
@@ -335,10 +337,10 @@ class TemplateHelper {
 		}
 		$html = [];
 		foreach ( $postIds as $id ) {
-			$revId = $context['posts'][$id][0] ?? '';
+			$revId = $context['posts'][$id][0];
 
-			if ( !$revId || !isset( $context['revisions'][$revId] ) ) {
-				throw new FlowException( "Revision not available: $revId. Post ID: $id" );
+			if ( !isset( $context['revisions'][$revId] ) ) {
+				throw new FlowException( "Revision not available: $revId" );
 			}
 
 			// $fn is always safe return value, it's the inner template content.
@@ -387,7 +389,7 @@ class TemplateHelper {
 		foreach ( $linkKeys as $linkKey ) {
 			if ( isset( $revision['links'][$linkKey] ) ) {
 				$link = $revision['links'][$linkKey];
-				$formattedTimeOutput = Html::element(
+				$formattedTime = Html::element(
 					'a',
 					[
 						'href' => $link['url'],
@@ -401,7 +403,7 @@ class TemplateHelper {
 		}
 
 		if ( $raw === false ) {
-			$formattedTimeOutput = htmlspecialchars( $formattedTime );
+			$formattedTime = htmlspecialchars( $formattedTime );
 		}
 
 		$class = [ 'mw-changeslist-date' ];
@@ -411,7 +413,7 @@ class TemplateHelper {
 
 		return self::html(
 			'<span class="plainlinks">'
-			. Html::rawElement( 'span', [ 'class' => $class ], $formattedTimeOutput )
+			. Html::rawElement( 'span', [ 'class' => $class ], $formattedTime )
 			. '</span>'
 		);
 	}
@@ -429,7 +431,7 @@ class TemplateHelper {
 		}
 		$revision = $args[0];
 		if ( !isset( $revision['properties']['_key'] ) ) {
-			return [];
+			return '';
 		}
 
 		$i18nKey = $revision['properties']['_key'];
@@ -508,7 +510,7 @@ class TemplateHelper {
 		$data['args'] = $args;
 		$baseConfig = [
 			// 'infusable' => true,
-			'id' => $named[ 'name' ] ?? null,
+			'id' => isset( $named[ 'name' ] ) ? isset( $named[ 'name' ] ) : null,
 			'classes' => $classes,
 			'data' => $data
 		];
@@ -544,7 +546,6 @@ class TemplateHelper {
 
 		return wfMessage( $str )->params( $args )->text();
 	}
-
 	/**
 	 * @param array $args one or more arguments, i18n key and parameters
 	 * @param array $named unused
@@ -554,28 +555,6 @@ class TemplateHelper {
 	public static function l10nParse( array $args, array $named ) {
 		$str = array_shift( $args );
 		return self::html( wfMessage( $str, $args )->parse() );
-	}
-
-	/**
-	 * A helper to output whether a wiki is publish wiki or not
-	 *
-	 * @param array $args unused
-	 * @param array $named Mandatory named object for arguments given by handlebars:
-	 *  save: Message key for the 'save' version
-	 *  publish: Message key for the 'publish' version
-	 * @return string Translated message string for either 'save' or 'publish'
-	 *  version
-	 */
-	public static function getSaveOrPublishMessage( array $args, array $named ) {
-		global $wgEditSubmitButtonLabelPublish;
-
-		if ( !$named['save'] || !$named['publish'] ) {
-			throw new FlowException( "Missing an argument. Expected two message keys for 'save' and 'post'" );
-		}
-
-		$msg = $wgEditSubmitButtonLabelPublish ? $named['publish'] : $named['save'];
-
-		return wfMessage( $msg )->text();
 	}
 
 	/**
@@ -593,15 +572,15 @@ class TemplateHelper {
 
 		$data = $args[0];
 		$differenceEngine = new \DifferenceEngine();
+		$multi = $differenceEngine->getMultiNotice();
+		// Display a message when the diff is empty
 		$notice = '';
 		if ( $data['diff_content'] === '' ) {
 			$notice .= '<div class="mw-diff-empty">' .
 				wfMessage( 'diff-empty' )->parse() .
 				"</div>\n";
 		}
-		// Work around exception in DifferenceEngine::showDiffStyle() (T202454)
-		$out = RequestContext::getMain()->getOutput();
-		$out->addModuleStyles( 'mediawiki.diff.styles' );
+		$differenceEngine->showDiffStyle();
 
 		$renderer = Container::get( 'lightncandy' )->getTemplate( 'flow_revision_diff_header' );
 
@@ -617,8 +596,7 @@ class TemplateHelper {
 				'revision' => $data['new'],
 				'links' => $data['links'],
 			] ),
-			// FIXME we should be passing in a multinotice for multi-rev diffs here
-			'',
+			$multi,
 			$notice
 		) );
 	}
@@ -630,22 +608,20 @@ class TemplateHelper {
 		list( $diffContent ) = $args;
 
 		$differenceEngine = new \DifferenceEngine();
+		$multi = $differenceEngine->getMultiNotice();
 		$notice = '';
 		if ( $diffContent === '' ) {
 			$notice = '<div class="mw-diff-empty">' .
 				wfMessage( 'diff-empty' )->parse() .
 				"</div>\n";
 		}
-		// Work around exception in DifferenceEngine::showDiffStyle() (T202454)
-		$out = RequestContext::getMain()->getOutput();
-		$out->addModuleStyles( 'mediawiki.diff.styles' );
+		$differenceEngine->showDiffStyle();
 
 		return self::html( $differenceEngine->addHeader(
 			$diffContent,
 			wfMessage( 'flow-undo-latest-revision' ),
 			wfMessage( 'flow-undo-your-text' ),
-			// FIXME we should be passing in a multinotice for multi-rev diffs here
-			'',
+			$multi,
 			$notice
 		) );
 	}
@@ -684,7 +660,7 @@ class TemplateHelper {
 	 * @return string value of property
 	 */
 	public static function user( array $args, array $named ) {
-		$feature = $args[0] ?? 'name';
+		$feature = isset( $args[0] ) ? $args[0] : 'name';
 		$user = RequestContext::getMain()->getUser();
 		$userInfo = [
 			'id' => $user->getId(),
@@ -739,7 +715,7 @@ class TemplateHelper {
 		unset( $returnToQuery['title'] );
 
 		$args = [
-			'returnto' => $returnTo->getPrefixedURL(),
+			'returnto' => $returnTo->getPrefixedUrl(),
 		];
 		if ( $returnToQuery ) {
 			$args['returntoquery'] = wfArrayToCgi( $returnToQuery );
@@ -765,7 +741,7 @@ class TemplateHelper {
 			return '';
 		}
 		// FIXME: This should use local url to avoid redirects on mobile. See bug 66746.
-		$url = $title->getFullURL();
+		$url = $title->getFullUrl();
 
 		return self::addReturnTo( $url );
 	}
@@ -781,7 +757,7 @@ class TemplateHelper {
 	 * @param string[] $args Expects string $contentType, string $content
 	 * @param array $named No named arguments expected
 	 *
-	 * @return string|string[]
+	 * @return string
 	 * @throws WrongNumberArgumentsException
 	 */
 	public static function escapeContent( array $args, array $named ) {
@@ -803,7 +779,7 @@ class TemplateHelper {
 	 * @return mixed result of callback
 	 * @throws FlowException Fails when callbacks are not Closure instances
 	 */
-	public static function ifCond( $value, $operator, $value2, array $options ) {
+	public static function ifCond( $value, $operator, $value2, $options ) {
 		$doCallback = false;
 
 		// Perform operator

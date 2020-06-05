@@ -4,7 +4,7 @@ namespace Flow\Collection;
 
 class HeaderCollection extends LocalCacheAbstractCollection {
 	public static function getRevisionClass() {
-		return \Flow\Model\Header::class;
+		return 'Flow\\Model\\Header';
 	}
 
 	public function getWorkflowId() {

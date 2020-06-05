@@ -9,7 +9,6 @@ use Flow\Exception\PermissionException;
 use Flow\Conversion\Utils;
 use ContentHandler;
 use Hooks;
-use MediaWiki\MediaWikiServices;
 use Sanitizer;
 use Title;
 use User;
@@ -28,7 +27,7 @@ abstract class AbstractRevision {
 	 *
 	 * @var string[]
 	 */
-	public static $perms = [
+	static public $perms = [
 		self::MODERATED_NONE,
 		self::MODERATED_HIDDEN,
 		self::MODERATED_DELETED,
@@ -41,7 +40,7 @@ abstract class AbstractRevision {
 	 *
 	 * @var array|null
 	 */
-	protected static $moderationChangeTypes = null;
+	static protected $moderationChangeTypes = null;
 
 	/**
 	 * @var UUID
@@ -164,7 +163,7 @@ abstract class AbstractRevision {
 	public static function fromStorageRow( array $row, $obj = null ) {
 		if ( $obj === null ) {
 			/** @var AbstractRevision $obj */
-			$obj = new static; // @phan-suppress-current-line PhanTypeInstantiateAbstract
+			$obj = new static;
 		} elseif ( !$obj instanceof static ) {
 			throw new DataModelException( 'wrong object type', 'process-data' );
 		}
@@ -178,14 +177,13 @@ abstract class AbstractRevision {
 		$obj->flags = array_filter( explode( ',', $row['rev_flags'] ) );
 		$obj->content = $row['rev_content'];
 		// null if external store is not being used
-		$obj->contentUrl = $row['rev_content_url'] ?? null;
+		$obj->contentUrl = isset( $row['rev_content_url'] ) ? $row['rev_content_url'] : null;
 		$obj->decompressedContent = null;
 
 		$obj->moderationState = $row['rev_mod_state'];
 		$obj->moderatedBy = UserTuple::newFromArray( $row, 'rev_mod_user_' );
 		$obj->moderationTimestamp = $row['rev_mod_timestamp'] ?: null;
-		$obj->moderatedReason = isset( $row['rev_mod_reason'] ) && $row['rev_mod_reason']
-			? $row['rev_mod_reason'] : null;
+		$obj->moderatedReason = isset( $row['rev_mod_reason'] ) && $row['rev_mod_reason'] ? $row['rev_mod_reason'] : null;
 
 		// BC: 'suppress' used to be called 'censor' & 'lock' was 'close'
 		$bc = [
@@ -195,12 +193,11 @@ abstract class AbstractRevision {
 		$obj->moderationState = str_replace( array_keys( $bc ), array_values( $bc ), $obj->moderationState );
 
 		// isset required because there is a possible db migration, cached data will not have it
-		$obj->lastEditId = isset( $row['rev_last_edit_id'] ) && $row['rev_last_edit_id']
-			? UUID::create( $row['rev_last_edit_id'] ) : null;
+		$obj->lastEditId = isset( $row['rev_last_edit_id'] ) && $row['rev_last_edit_id'] ? UUID::create( $row['rev_last_edit_id'] ) : null;
 		$obj->lastEditUser = UserTuple::newFromArray( $row, 'rev_edit_user_' );
 
-		$obj->contentLength = $row['rev_content_length'] ?? 0;
-		$obj->previousContentLength = $row['rev_previous_content_length'] ?? 0;
+		$obj->contentLength = isset( $row['rev_content_length'] ) ? $row['rev_content_length'] : 0;
+		$obj->previousContentLength = isset( $row['rev_previous_content_length'] ) ? $row['rev_previous_content_length'] : 0;
 
 		return $obj;
 	}
@@ -251,11 +248,8 @@ abstract class AbstractRevision {
 	 * @throws PermissionException
 	 */
 	public function newNullRevision( User $user ) {
-		if ( !MediaWikiServices::getInstance()->getPermissionManager()
-				->userHasRight( $user, 'edit' )
-		) {
-			throw new PermissionException( 'User does not have core edit permission',
-				'insufficient-permission' );
+		if ( !$user->isAllowed( 'edit' ) ) {
+			throw new PermissionException( 'User does not have core edit permission', 'insufficient-permission' );
 		}
 		$obj = clone $this;
 		$obj->revId = UUID::create();
@@ -378,17 +372,13 @@ abstract class AbstractRevision {
 	 * Templating::getContent, which will do additional (permissions-based)
 	 * checks to make sure it outputs something the user can see.
 	 *
-	 * @param string $format Format to output content in
-	 *   (html|wikitext|topic-title-wikitext|topic-title-html|topic-title-plaintext)
+	 * @param string[optional] $format Format to output content in (html|wikitext|topic-title-wikitext|topic-title-html|topic-title-plaintext)
 	 * @return string
-	 * @return-taint onlysafefor_htmlnoent
 	 * @throws InvalidDataException
-	 * @throws \Flow\Exception\WikitextException
 	 */
 	public function getContent( $format = 'html' ) {
 		if ( !$this->isContentCurrentlyRetrievable() ) {
-			wfDebugLog( 'Flow', __METHOD__ . ': Failed to load the content of revision with rev_id ' .
-				$this->revId->getAlphadecimal() );
+			wfDebugLog( 'Flow', __METHOD__ . ': Failed to load the content of revision with rev_id ' . $this->revId->getAlphadecimal() );
 
 			$stubContent = wfMessage( 'flow-stub-post-content' )->parse();
 			if ( !in_array( $format, [ 'html', 'fixed-html' ] ) ) {
@@ -407,8 +397,7 @@ abstract class AbstractRevision {
 			// returns true if no handler aborted the hook
 			$this->xssCheck = Hooks::run( 'FlowCheckHtmlContentXss', [ $raw ] );
 			if ( !$this->xssCheck ) {
-				wfDebugLog( 'Flow', __METHOD__ . ': XSS check prevented display of revision ' .
-					$this->revId->getAlphadecimal() );
+				wfDebugLog( 'Flow', __METHOD__ . ': XSS check prevented display of revision ' . $this->revId->getAlphadecimal() );
 				return '';
 			}
 		}
@@ -416,12 +405,6 @@ abstract class AbstractRevision {
 		if ( !isset( $this->convertedContent[$format] ) ) {
 			if ( $sourceFormat === $format ) {
 				$this->convertedContent[$format] = $raw;
-				if ( in_array( $format, [ 'fixed-html', 'html' ] ) ) {
-					// For backwards compatibility wrap old content with body tag if necessary,
-					// and restore the <base> tag based on the base-url attribute on the body tag,
-					// if any. All of this is done by decodeHeadInfo().
-					$this->convertedContent[$format] = Utils::decodeHeadInfo( $raw );
-				}
 			} else {
 				$this->convertedContent[$format] = Utils::convert(
 					$sourceFormat,
@@ -527,8 +510,7 @@ abstract class AbstractRevision {
 	 */
 	protected function setContent( $content, $format, Title $title = null ) {
 		if ( $this->moderationState !== self::MODERATED_NONE ) {
-			throw new DataModelException( 'TODO: Cannot change content of restricted revision',
-				'process-data' );
+			throw new DataModelException( 'TODO: Cannot change content of restricted revision', 'process-data' );
 		}
 
 		if ( $this->content !== null ) {
@@ -540,8 +522,7 @@ abstract class AbstractRevision {
 		}
 
 		if ( $format !== 'wikitext' && $format !== 'html' && $format !== 'topic-title-wikitext' ) {
-			throw new DataModelException( 'Invalid format: Supported formats for new content are ' .
-				'\'wikitext\', \'html\', and \'topic-title-wikitext\'' );
+			throw new DataModelException( 'Invalid format: Supported formats for new content are \'wikitext\', \'html\', and \'topic-title-wikitext\'' );
 		}
 
 		// never trust incoming html - roundtrip to wikitext first
@@ -568,29 +549,9 @@ abstract class AbstractRevision {
 		// convert content to desired storage format
 		$storageFormat = $this->getStorageFormat();
 		if ( $storageFormat !== $format ) {
-			$this->convertedContent[$storageFormat] = Utils::convert(
-				$format, $storageFormat, $content, $title );
+			$this->convertedContent[$storageFormat] = Utils::convert( $format, $storageFormat, $content, $title );
 		}
 
-		$this->setContentRaw( $this->convertedContent );
-	}
-
-	/**
-	 * Helper function for setContent(). Don't call this directly.
-	 * Also called by the FlowReserializeRevisionContent maintenance script using reflection.
-	 *
-	 * $convertedContent may contain 'html', 'wikitext' or both, but must at least contain the
-	 * storage format (as returned by getStorageFormat()).
-	 *
-	 * @param array $convertedContent [ 'html' => string, 'wikitext' => string ]
-	 */
-	protected function setContentRaw( $convertedContent ) {
-		$storageFormat = $this->getStorageFormat();
-		if ( !isset( $convertedContent[ $storageFormat ] ) ) {
-			throw new DataModelException( 'Content not given in storage format ' . $storageFormat );
-		}
-
-		$this->convertedContent = $convertedContent;
 		$this->content = $this->decompressedContent = $this->convertedContent[$storageFormat];
 		$this->contentUrl = null;
 

@@ -2,7 +2,7 @@
 
 use Flow\Import\SourceStore\FileImportSourceStore;
 use Flow\Import\LiquidThreadsApi\RemoteApiBackend;
-use Flow\Import\LiquidThreadsApi\ImportSource;
+use Flow\Import\LiquidThreadsApi\ImportSource as LiquidThreadsApiImportSource;
 use Psr\Log\LogLevel;
 
 require_once getenv( 'MW_INSTALL_PATH' ) !== false
@@ -18,7 +18,7 @@ require_once getenv( 'MW_INSTALL_PATH' ) !== false
 class ConvertLqtPageFromRemoteApiForTesting extends Maintenance {
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( "Converts LiquidThreads data to Flow data.  Destination page is determined by ConversionStrategy" );
+		$this->mDescription = "Converts LiquidThreads data to Flow data.  Destination page is determined by ConversionStrategy";
 		$this->addOption( 'dstpage', 'Page name of the destination page on the current wiki.  Defaults to same as source', false, true );
 		$this->addOption( 'srcpage', 'Page name of the source page to import from.', true, true );
 		$this->addOption( 'remoteapi', 'Remote API URL to read from', true, true );
@@ -54,7 +54,7 @@ class ConvertLqtPageFromRemoteApiForTesting extends Maintenance {
 		}
 
 		$dstTitle = Title::newFromText( $dstPageName );
-		$source = new ImportSource(
+		$source = new LiquidThreadsApiImportSource(
 			$api,
 			$srcPageName,
 			$talkPageManagerUser
@@ -81,5 +81,5 @@ class ConvertLqtPageFromRemoteApiForTesting extends Maintenance {
 	}
 }
 
-$maintClass = ConvertLqtPageFromRemoteApiForTesting::class;
+$maintClass = "ConvertLqtPageFromRemoteApiForTesting";
 require_once RUN_MAINTENANCE_IF_MAIN;

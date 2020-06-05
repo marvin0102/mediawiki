@@ -7,7 +7,7 @@ use DateTimeZone;
 use ExtensionRegistry;
 use Flow\Import\ArchiveNameHelper;
 use Flow\Import\IConversionStrategy;
-use Flow\Import\SourceStore\SourceStoreInterface;
+use Flow\Import\SourceStore\SourceStoreInterface as ImportSourceStore;
 use LinkBatch;
 use Parser;
 use Psr\Log\LoggerInterface;
@@ -37,7 +37,7 @@ class ConversionStrategy implements IConversionStrategy {
 	protected $logger;
 
 	/**
-	 * @var SourceStoreInterface
+	 * @var ImportSourceStore
 	 */
 	protected $sourceStore;
 
@@ -64,23 +64,18 @@ class ConversionStrategy implements IConversionStrategy {
 	protected $user;
 
 	/**
-	 * @var Title[]
-	 */
-	private $noConvertTemplates;
-
-	/**
 	 * @param Parser|StubObject $parser
-	 * @param SourceStoreInterface $sourceStore
+	 * @param ImportSourceStore $sourceStore
 	 * @param LoggerInterface $logger
 	 * @param User $user User to take conversion actions are (applicable for actions
 	 *   where if there is no 'original' user)
 	 * @param Title[] $noConvertTemplates List of templates that flag pages that
 	 *  shouldn't be converted (optional)
-	 * @param string|null $headerSuffix Wikitext to add to the end of the header (optional)
+	 * @param string $headerSuffix Wikitext to add to the end of the header (optional)
 	 */
 	public function __construct(
 		$parser,
-		SourceStoreInterface $sourceStore,
+		ImportSourceStore $sourceStore,
 		LoggerInterface $logger,
 		User $user,
 		array $noConvertTemplates = [],
@@ -170,7 +165,7 @@ class ConversionStrategy implements IConversionStrategy {
 		] );
 
 		$template = wfMessage( 'flow-importer-wt-converted-archive-template' )->inContentLanguage()->plain();
-		$newWikitext = "{{{$template}|$arguments}}" . "\n\n" . $content->getText();
+		$newWikitext = "{{{$template}|$arguments}}" . "\n\n" . $content->getNativeData();
 
 		return new WikitextContent( $newWikitext );
 	}
@@ -188,9 +183,7 @@ class ConversionStrategy implements IConversionStrategy {
 		// a talk page with matching subject page. For example
 		// we will convert User_talk:Foo/bar only if User:Foo/bar
 		// exists, and we will never convert User:Baz/bang.
-		if ( $sourceTitle->isSubpage() &&
-			( !$sourceTitle->isTalkPage() || !$sourceTitle->getSubjectPage()->exists() )
-		) {
+		if ( $sourceTitle->isSubPage() && ( !$sourceTitle->isTalkPage() || !$sourceTitle->getSubjectPage()->exists() ) ) {
 			return false;
 		}
 
@@ -231,15 +224,12 @@ class ConversionStrategy implements IConversionStrategy {
 		// be converted separately.
 		if ( ExtensionRegistry::getInstance()->isLoaded( 'Liquid Threads' ) ) {
 			if ( \LqtDispatch::isLqtPage( $sourceTitle ) ) {
-				$this->logger->info( "Skipping LQT enabled page, conversion must be done with " .
-					"convertLqtPagesWithProp.php or convertLqtPageOnLocalWiki.php: $sourceTitle" );
+				$this->logger->info( "Skipping LQT enabled page, conversion must be done with convertLqtPagesWithProp.php or convertLqtPageOnLocalWiki.php: $sourceTitle" );
 				return false;
 			}
 		}
 
-		if ( !$this->meetsSubpageRequirements( $sourceTitle ) ||
-			$this->hasNoConvertTemplate( $sourceTitle )
-		) {
+		if ( !$this->meetsSubpageRequirements( $sourceTitle ) || $this->hasNoConvertTemplate( $sourceTitle ) ) {
 			return false;
 		}
 

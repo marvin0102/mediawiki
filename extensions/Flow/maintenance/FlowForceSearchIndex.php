@@ -26,7 +26,7 @@ class FlowForceSearchIndex extends Maintenance {
 	public function __construct() {
 		parent::__construct();
 
-		$this->addDescription( 'Force indexing Flow revisions (headers & topics).' );
+		$this->mDescription = 'Force indexing Flow revisions (headers & topics).';
 
 		$this->setBatchSize( 10 );
 
@@ -75,5 +75,5 @@ class FlowForceSearchIndex extends Maintenance {
 	}
 }
 
-$maintClass = FlowForceSearchIndex::class;
+$maintClass = 'FlowForceSearchIndex';
 require_once RUN_MAINTENANCE_IF_MAIN;

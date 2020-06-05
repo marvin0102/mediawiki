@@ -1,4 +1,4 @@
-( function () {
+( function ( mw, OO, ve ) {
 	'use strict';
 
 	/**
@@ -11,9 +11,8 @@
 	 * @param {ve.dm.Model} model Model item is related to
 	 * @param {Object} config Configuration options
 	 */
-	mw.flow.ve.ui.MentionContextItem = function FlowVeMentionContextItem() {
-		// Parent constructor
-		mw.flow.ve.ui.MentionContextItem.super.apply( this, arguments );
+	mw.flow.ve.ui.MentionContextItem = function FlowVeMentionContextItem( context, model, config ) {
+		mw.flow.ve.ui.MentionContextItem.parent.call( this, context, model, config );
 
 		this.$element.addClass( 'flow-ve-ui-mentionContextItem' );
 	};
@@ -55,4 +54,4 @@
 	};
 
 	ve.ui.contextItemFactory.register( mw.flow.ve.ui.MentionContextItem );
-}() );
+}( mediaWiki, OO, ve ) );

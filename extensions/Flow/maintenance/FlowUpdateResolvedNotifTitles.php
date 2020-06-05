@@ -22,7 +22,7 @@ class FlowUpdateResolvedNotifTitles extends LoggedUpdateMaintenance {
 	public function __construct() {
 		parent::__construct();
 
-		$this->addDescription( "Update the titles of flow-topic-resolved Echo events to point to boards instead of topics" );
+		$this->mDescription = "Update the titles of flow-topic-resolved Echo events to point to boards instead of topics";
 
 		$this->setBatchSize( 500 );
 
@@ -60,7 +60,7 @@ class FlowUpdateResolvedNotifTitles extends LoggedUpdateMaintenance {
 		$processed = 0;
 		foreach ( $iterator as $batch ) {
 			foreach ( $batch as $row ) {
-				$topicTitle = Title::newFromID( $row->event_page_id );
+				$topicTitle = Title::newFromId( $row->event_page_id );
 				if ( !$topicTitle || $topicTitle->getNamespace() !== NS_TOPIC ) {
 					continue;
 				}
@@ -76,7 +76,7 @@ class FlowUpdateResolvedNotifTitles extends LoggedUpdateMaintenance {
 				if ( $boardTitle ) {
 					$dbw->update(
 						'echo_event',
-						[ 'event_page_id' => $boardTitle->getArticleID() ],
+						[ 'event_page_id' => $boardTitle->getArticleId() ],
 						[ 'event_id' => $row->event_id ]
 					);
 					$processed += $dbw->affectedRows();
@@ -93,5 +93,5 @@ class FlowUpdateResolvedNotifTitles extends LoggedUpdateMaintenance {
 	}
 }
 
-$maintClass = FlowUpdateResolvedNotifTitles::class;
+$maintClass = 'FlowUpdateResolvedNotifTitles';
 require_once RUN_MAINTENANCE_IF_MAIN;

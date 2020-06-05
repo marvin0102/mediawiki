@@ -11,15 +11,19 @@ QUnit.test( 'Stores different content representations (formats)', function ( ass
 		someNewFormat: 'content in some new format'
 	} );
 
-	assert.strictEqual( content.get( 'html' ), 'content in html format' );
-	assert.strictEqual( content.get( 'wikitext' ), 'content in default format (wikitext, for instance)' );
-	assert.strictEqual( content.get(), 'content in default format (wikitext, for instance)' );
-	assert.strictEqual( content.get( 'unknown format' ), null );
+	assert.equal( content.get( 'html' ), 'content in html format' );
+	assert.equal( content.get( 'wikitext' ), 'content in default format (wikitext, for instance)' );
+	assert.equal( content.get(), 'content in default format (wikitext, for instance)' );
+	assert.equal( content.get( 'unknown format' ), null );
+
+	assert.expect( 4 );
 } );
 
 QUnit.test( 'Behaves when empty', function ( assert ) {
 	var content = new mw.flow.dm.Content();
 
-	assert.strictEqual( content.get(), null );
-	assert.strictEqual( content.get( 'whatever format' ), null );
+	assert.equal( content.get(), null );
+	assert.equal( content.get( 'whatever format' ), null );
+
+	assert.expect( 2 );
 } );

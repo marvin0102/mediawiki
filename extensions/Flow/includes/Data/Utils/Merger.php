@@ -32,16 +32,16 @@ class Merger {
 		if ( !$ids ) {
 			return $source;
 		}
-		$res = $callable( $ids );
+		$res = call_user_func( $callable, $ids );
 		if ( $res === false ) {
-			return [];
+			return false;
 		}
 		foreach ( $source as $idx => $row ) {
 			$id = $row[$fromKey];
 			if ( $id === null ) {
 				continue;
 			}
-			$source[$idx][$name] = $res[$id] ?? $default;
+			$source[$idx][$name] = isset( $res[$id] ) ? $res[$id] : $default;
 		}
 		return $source;
 	}
@@ -76,9 +76,9 @@ class Merger {
 		if ( !$ids ) {
 			return $multiSource;
 		}
-		$res = $callable( array_unique( $ids ) );
+		$res = call_user_func( $callable, array_unique( $ids ) );
 		if ( $res === false ) {
-			return [];
+			return false;
 		}
 		foreach ( $multiSource as $i => $source ) {
 			if ( $source === null ) {
@@ -89,7 +89,7 @@ class Merger {
 				if ( $id === null ) {
 					continue;
 				}
-				$multiSource[$i][$j][$name] = $res[$id] ?? $default;
+				$multiSource[$i][$j][$name] = isset( $res[$id] ) ? $res[$id] : $default;
 			}
 		}
 		return $multiSource;

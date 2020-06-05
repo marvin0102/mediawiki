@@ -9,9 +9,8 @@ use Flow\Data\FlowObjectCache;
 use Flow\Model\UUID;
 use HashBagOStuff;
 use WANObjectCache;
-use MediaWikiTestCase;
 
-class FlowTestCase extends MediaWikiTestCase {
+class FlowTestCase extends \MediaWikiTestCase {
 	protected function setUp() {
 		Container::reset();
 		parent::setUp();
@@ -47,7 +46,8 @@ class FlowTestCase extends MediaWikiTestCase {
 		$data = $registry->readFromQueue( [ __DIR__ . '/../../extension.json' => 1 ] );
 		$perms = $data['globals']['wgGroupPermissions'];
 		unset( $perms[$registry::MERGE_STRATEGY] );
+		$this->stashMwGlobals( [ 'wgGroupPermissions' ] );
 		global $wgGroupPermissions;
-		$this->setMwGlobals( 'wgGroupPermissions', wfArrayPlus2d( $perms, $wgGroupPermissions ) );
+		$wgGroupPermissions = wfArrayPlus2d( $perms, $wgGroupPermissions );
 	}
 }

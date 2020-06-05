@@ -51,16 +51,11 @@ abstract class ExternalStoreMoveCluster extends Maintenance {
 	public function __construct() {
 		parent::__construct();
 
-		$this->addDescription( 'Moves ExternalStore content from (a) particular cluster(s) to ' .
-			'(an)other(s). Just make sure all clusters are valid $wgExternalServers.' );
+		$this->mDescription = 'Moves ExternalStore content from (a) particular cluster(s) to (an)other(s). Just make sure all clusters are valid $wgExternalServers.';
 
-		$this->addOption( 'from', 'ExternalStore cluster to move from (comma-separated). ' .
-			'E.g.: --from=cluster24,cluster25', true, true );
-		$this->addOption( 'to', 'ExternalStore cluster to move to (comma-separated). ' .
-			'E.g.: --to=cluster26', true, true );
-		$this->addOption( 'dry-run', 'Outputs the old user content, inserts into new ' .
-			'External Store, gives hypothetical new column values for flow_revision (but does ' .
-			'not actually change flow_revision), and checks that old and new ES are the same.' );
+		$this->addOption( 'from', 'ExternalStore cluster to move from (comma-separated). E.g.: --from=cluster24,cluster25', true, true );
+		$this->addOption( 'to', 'ExternalStore cluster to move to (comma-separated). E.g.: --to=cluster26', true, true );
+		$this->addOption( 'dry-run', 'Outputs the old user content, inserts into new External Store, gives hypothetical new column values for flow_revision (but does not actually change flow_revision), and checks that old and new ES are the same.' );
 
 		$this->setBatchSize( 300 );
 
@@ -119,10 +114,7 @@ abstract class ExternalStoreMoveCluster extends Maintenance {
 						$this->output( "New external store content matches old external store content\n" );
 					} else {
 						$revIdStr = UUID::create( $row->rev_id )->getAlphadecimal();
-						$this->error( "New content for ID $revIdStr does not match prior content.\n" .
-							"New content: $newContent\nOld content: $oldContent\n\nTerminating dry run.\n",
-							1
-						);
+						$this->error( "New content for ID $revIdStr does not match prior content.\nNew content: $newContent\nOld content: $oldContent\n\nTerminating dry run.\n", 1 );
 					}
 				}
 
@@ -147,7 +139,7 @@ abstract class ExternalStoreMoveCluster extends Maintenance {
 	 * a Closure.
 	 *
 	 * @param string $out
-	 * @param mixed|null $channel
+	 * @param mixed $channel
 	 */
 	public function output( $out, $channel = null ) {
 		parent::output( $out, $channel );
@@ -205,7 +197,7 @@ class ExternalStoreUpdateGenerator implements RowUpdateGenerator {
 			$data = $this->write( $content, $flags );
 		} catch ( \Exception $e ) {
 			// something went wrong, just output the error & don't update!
-			$this->script->error( $e->getMessage() . "\n" );
+			$this->script->error( $e->getMessage(). "\n" );
 			return [];
 		}
 
@@ -284,8 +276,8 @@ class FlowExternalStoreMoveCluster extends ExternalStoreMoveCluster {
 		$dbFactory = $container['db.factory'];
 
 		return [
-			'dbr' => $dbFactory->getDB( DB_REPLICA ),
-			'dbw' => $dbFactory->getDB( DB_MASTER ),
+			'dbr' => $dbFactory->getDb( DB_REPLICA ),
+			'dbw' => $dbFactory->getDb( DB_MASTER ),
 			'table' => 'flow_revision',
 			'pk' => 'rev_id',
 			'content' => 'rev_content',
@@ -295,5 +287,5 @@ class FlowExternalStoreMoveCluster extends ExternalStoreMoveCluster {
 	}
 }
 
-$maintClass = FlowExternalStoreMoveCluster::class;
+$maintClass = 'FlowExternalStoreMoveCluster';
 require_once RUN_MAINTENANCE_IF_MAIN;

@@ -1,7 +1,6 @@
-( function () {
-	// eslint-disable-next-line no-jquery/no-global-selector
+( function ( window, document, $, mw, gt ) {
 	var archiveLinkExists = $( '.flow-link-to-archive' ).length,
-		tour = new mw.guidedTour.TourBuilder( {
+		tour = new gt.TourBuilder( {
 			name: 'flowOptIn',
 			shouldLog: true,
 			isSinglePage: true
@@ -53,4 +52,4 @@
 		} )
 		.back( archiveLinkExists ? 'findOldConversations' : 'newTopic' );
 
-}() );
+}( window, document, jQuery, mediaWiki, mediaWiki.guidedTour ) );

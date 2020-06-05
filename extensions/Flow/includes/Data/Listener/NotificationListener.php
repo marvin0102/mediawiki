@@ -38,8 +38,7 @@ class NotificationListener extends AbstractListener {
 				$metadata['topic-title'],
 				$metadata['first-post']
 			) ) {
-				throw new InvalidDataException( 'Invalid metadata for revision ' .
-					$object->getRevisionId()->getAlphadecimal(), 'missing-metadata' );
+				throw new InvalidDataException( 'Invalid metadata for revision ' . $object->getRevisionId()->getAlphadecimal(), 'missing-metadata' );
 			}
 
 			$this->notificationController->notifyNewTopic( [
@@ -51,17 +50,14 @@ class NotificationListener extends AbstractListener {
 			break;
 
 		case 'edit-title':
-			// @phan-suppress-next-line PhanTypeMismatchArgument
 			$this->notifyPostChange( 'flow-topic-renamed', $object, $metadata );
 			break;
 
 		case 'reply':
-			// @phan-suppress-next-line PhanTypeMismatchArgument
 			$this->notifyPostChange( 'flow-post-reply', $object, $metadata );
 			break;
 
 		case 'edit-post':
-			// @phan-suppress-next-line PhanTypeMismatchArgument
 			$this->notifyPostChange( 'flow-post-edited', $object, $metadata );
 			break;
 
@@ -119,8 +115,7 @@ class NotificationListener extends AbstractListener {
 			$metadata['workflow'],
 			$metadata['topic-title']
 		) ) {
-			throw new InvalidDataException( 'Invalid metadata for topic|post revision ' .
-				$object->getRevisionId()->getAlphadecimal(), 'missing-metadata' );
+			throw new InvalidDataException( 'Invalid metadata for topic|post revision ' . $object->getRevisionId()->getAlphadecimal(), 'missing-metadata' );
 		}
 
 		$workflow = $metadata['workflow'];

@@ -1,5 +1,5 @@
 /** @class jQuery.fn */
-( function () {
+( function ( $ ) {
 	/**
 	 * Scrolls the viewport to fit $el into view only if necessary. Scenarios:
 	 * 1. If el starts above viewport, scrolls to put top of el at top of viewport.
@@ -37,7 +37,6 @@
 
 			if ( scrollTo > -1 ) {
 				// Scroll the viewport to display this element
-				// eslint-disable-next-line no-jquery/no-global-selector
 				$( 'html, body' ).animate( { scrollTop: scrollTo }, speed, function () {
 					// Fire off the next fx queue on the main element when we finish scrolling the window
 					$this.dequeue();
@@ -51,4 +50,4 @@
 		// Do nothing
 		return this;
 	};
-}() );
+}( jQuery ) );

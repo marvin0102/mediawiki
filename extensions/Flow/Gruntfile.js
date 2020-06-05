@@ -4,13 +4,14 @@
  * @package Flow
  */
 
-/* eslint-env node */
+/* eslint-env node: */
 module.exports = function ( grunt ) {
 	var conf = grunt.file.readJSON( 'extension.json' );
 
 	grunt.loadNpmTasks( 'grunt-banana-checker' );
 	grunt.loadNpmTasks( 'grunt-contrib-watch' );
 	grunt.loadNpmTasks( 'grunt-eslint' );
+	grunt.loadNpmTasks( 'grunt-jsonlint' );
 	grunt.loadNpmTasks( 'grunt-stylelint' );
 	grunt.loadNpmTasks( 'grunt-tyops' );
 
@@ -26,14 +27,9 @@ module.exports = function ( grunt ) {
 			]
 		},
 		eslint: {
-			options: {
-				reportUnusedDisableDirectives: true,
-				extensions: [ '.js', '.json' ],
-				cache: true
-			},
 			all: [
-				'**/*.js{,on}',
-				'!{modules/libs,docs,vendor,node_modules}/**'
+				'**/*.js',
+				'!{node_modules,vendor,docs}/**/*.js'
 			]
 		},
 		stylelint: {
@@ -53,10 +49,17 @@ module.exports = function ( grunt ) {
 				'<%= stylelint.all %>'
 			],
 			tasks: 'test'
+		},
+		jsonlint: {
+			all: [
+				'**/*.json',
+				'!node_modules/**',
+				'!vendor/**'
+			]
 		}
 	} );
 
-	grunt.registerTask( 'lint', [ 'tyops', 'eslint', 'stylelint', 'banana' ] );
+	grunt.registerTask( 'lint', [ 'tyops', 'eslint', 'stylelint', 'jsonlint', 'banana' ] );
 	grunt.registerTask( 'test', 'lint' );
 	grunt.registerTask( 'default', 'test' );
 };

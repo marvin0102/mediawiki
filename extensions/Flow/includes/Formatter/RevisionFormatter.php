@@ -3,7 +3,6 @@
 namespace Flow\Formatter;
 
 use Flow\Collection\PostCollection;
-use Flow\Exception\InvalidInputException;
 use Flow\Exception\PermissionException;
 use Flow\Repository\UserNameBatch;
 use Flow\Exception\FlowException;
@@ -20,11 +19,8 @@ use ApiResult;
 use ExtensionRegistry;
 use GenderCache;
 use IContextSource;
-use MediaWiki\Logger\LoggerFactory;
-use MediaWiki\MediaWikiServices;
 use Message;
 use Wikimedia\Timestamp\TimestampException;
-use User;
 
 /**
  * This implements a serializer for converting revision objects
@@ -130,7 +126,7 @@ class RevisionFormatter {
 		$this->templating = $templating;
 		$this->urlGenerator = $this->templating->getUrlGenerator();
 		$this->usernames = $usernames;
-		$this->genderCache = MediaWikiServices::getInstance()->getGenderCache();
+		$this->genderCache = GenderCache::singleton();
 		$this->maxThreadingDepth = $maxThreadingDepth;
 	}
 
@@ -174,13 +170,11 @@ class RevisionFormatter {
 	 *  'wikitext', and 'fixed-html' are valid only for non-topic titles.
 	 *  'topic-title-html' and 'topic-title-wikitext' are only valid for topic titles.
 	 *  Otherwise, an exception will be thrown later.
-	 * @param UUID|null $revisionId Revision ID this format applies for.
-	 * @throws FlowException
-	 * @throws InvalidInputException
+	 * @param UUID $revisionId Revision ID this format applies for.
 	 */
 	public function setContentFormat( $format, UUID $revisionId = null ) {
 		if ( false === array_search( $format, $this->allowedContentFormats ) ) {
-			throw new InvalidInputException( "Unknown content format: $format" );
+			throw new FlowException( "Unknown content format: $format" );
 		}
 		if ( $revisionId === null ) {
 			// set default content format
@@ -201,20 +195,11 @@ class RevisionFormatter {
 	 * @throws \Exception
 	 * @throws \Flow\Exception\InvalidInputException
 	 * @throws TimestampException
-	 * @suppress PhanUndeclaredMethod Phan doesn't infer types from the instanceofs
 	 */
 	public function formatApi( FormatterRow $row, IContextSource $ctx, $action = 'view' ) {
 		$this->permissions->setUser( $ctx->getUser() );
 
 		if ( !$this->permissions->isAllowed( $row->revision, $action ) ) {
-			LoggerFactory::getInstance( 'Flow' )->debug(
-				__METHOD__ . ': Permission denied for user on action {action}',
-				[
-					'action' => $action,
-					'revision_id' => $row->revision->getRevisionId(),
-					'user_id' => $ctx->getUser()->getId(),
-				]
-			);
 			return false;
 		}
 
@@ -255,8 +240,7 @@ class RevisionFormatter {
 				$row->revision->getLastContentEditUserId(),
 				$row->revision->getLastContentEditUserIp()
 			),
-			'lastEditId' => $row->revision->isOriginalContent()
-				? null : $row->revision->getLastContentEditId()->getAlphadecimal(),
+			'lastEditId' => $row->revision->isOriginalContent() ? null : $row->revision->getLastContentEditId()->getAlphadecimal(),
 			'previousRevisionId' => $row->revision->isFirstRevision()
 				? null
 				: $row->revision->getPrevRevisionId()->getAlphadecimal(),
@@ -361,8 +345,7 @@ class RevisionFormatter {
 
 				// moderated posts won't have that property
 				if ( isset( $res['properties']['topic-of-post-text-from-html']['plaintext'] ) ) {
-					$res['content']['plaintext'] =
-						$res['properties']['topic-of-post-text-from-html']['plaintext'];
+					$res['content']['plaintext'] = $res['properties']['topic-of-post-text-from-html']['plaintext'];
 				}
 			}
 
@@ -426,9 +409,7 @@ class RevisionFormatter {
 		// is this right permissions? typically this would
 		// be sourced from Linker::userToolLinks, but that
 		// only undertands html strings.
-		if ( MediaWikiServices::getInstance()->getPermissionManager()
-				->userHasRight( $this->permissions->getUser(), 'block' )
-		) {
+		if ( $this->permissions->getUser()->isAllowed( 'block' ) ) {
 			// only is the user has blocking rights
 			$links += [
 				"block" => [
@@ -490,8 +471,6 @@ class RevisionFormatter {
 	 * @throws FlowException
 	 */
 	public function buildActions( FormatterRow $row ) {
-		global $wgThanksSendToBots;
-
 		$user = $this->permissions->getUser();
 		$workflow = $row->workflow;
 		$title = $workflow->getArticleTitle();
@@ -506,7 +485,6 @@ class RevisionFormatter {
 		$action = $revision->getChangeType();
 		$workflowId = $workflow->getId();
 		$revId = $revision->getRevisionId();
-		// @phan-suppress-next-line PhanUndeclaredMethod Checks method_exists
 		$postId = method_exists( $revision, 'getPostId' ) ? $revision->getPostId() : null;
 		$actionTypes = $this->permissions->getActions()->getValue( $action, 'actions' );
 		if ( $actionTypes === null ) {
@@ -522,7 +500,6 @@ class RevisionFormatter {
 			}
 			switch ( $type ) {
 			case 'thank':
-				$targetedUser = User::newFromId( $revision->getCreatorId() );
 				if (
 					// thanks extension must be available
 					ExtensionRegistry::getInstance()->isLoaded( 'Thanks' ) &&
@@ -532,11 +509,9 @@ class RevisionFormatter {
 					// (other revision objects have no getCreator* methods)
 					$revision instanceof PostRevision &&
 					// only thank a logged in user
-					!$targetedUser->isAnon() &&
+					$revision->getCreatorId() > 0 &&
 					// can't thank self
-					$user->getId() !== $revision->getCreatorId() &&
-					// can't thank bots
-					!( !$wgThanksSendToBots && in_array( 'bot', $targetedUser->getGroups() ) )
+					$user->getId() !== $revision->getCreatorId()
 				) {
 					$links['thank'] = $this->urlGenerator->thankAction( $postId );
 				}
@@ -658,8 +633,7 @@ class RevisionFormatter {
 					break;
 				}
 				if ( isset( $moderateAction ) && $moderateAction ) {
-					$links[$moderateAction] = $this->urlGenerator->restoreTopicAction(
-						$title, $workflowId, $moderateAction, $flowAction );
+					$links[$moderateAction] = $this->urlGenerator->restoreTopicAction( $title, $workflowId, $moderateAction, $flowAction );
 				}
 				break;
 
@@ -677,8 +651,7 @@ class RevisionFormatter {
 					break;
 				}
 				if ( $moderateAction ) {
-					$links[$moderateAction] = $this->urlGenerator->restorePostAction(
-						$title, $workflowId, $postId, $moderateAction, $flowAction );
+					$links[$moderateAction] = $this->urlGenerator->restorePostAction( $title, $workflowId, $postId, $moderateAction, $flowAction );
 				}
 				break;
 
@@ -716,7 +689,6 @@ class RevisionFormatter {
 		$action = $revision->getChangeType();
 		$workflowId = $workflow->getId();
 		$revId = $revision->getRevisionId();
-		// @phan-suppress-next-line PhanUndeclaredMethod Checks method_exists
 		$postId = method_exists( $revision, 'getPostId' ) ? $revision->getPostId() : null;
 
 		$linkTypes = $this->permissions->getActions()->getValue( $action, 'links' );
@@ -726,7 +698,6 @@ class RevisionFormatter {
 		}
 
 		$links = [];
-		$diffCallback = null;
 		foreach ( $linkTypes as $type ) {
 			switch ( $type ) {
 			case 'watch-topic':
@@ -797,14 +768,14 @@ class RevisionFormatter {
 
 			/** @noinspection PhpMissingBreakStatementInspection */
 			case 'diff-header':
-				$diffCallback = $diffCallback ?? [ $this->urlGenerator, 'diffHeaderLink' ];
+				$diffCallback = isset( $diffCallback ) ? $diffCallback : [ $this->urlGenerator, 'diffHeaderLink' ];
 				// don't break, diff links are rendered below
 			/** @noinspection PhpMissingBreakStatementInspection */
 			case 'diff-post':
-				$diffCallback = $diffCallback ?? [ $this->urlGenerator, 'diffPostLink' ];
+				$diffCallback = isset( $diffCallback ) ? $diffCallback : [ $this->urlGenerator, 'diffPostLink' ];
 				// don't break, diff links are rendered below
 			case 'diff-post-summary':
-				$diffCallback = $diffCallback ?? [ $this->urlGenerator, 'diffSummaryLink' ];
+				$diffCallback = isset( $diffCallback ) ? $diffCallback : [ $this->urlGenerator, 'diffSummaryLink' ];
 
 				/*
 				 * To diff against previous revision, we don't really need that
@@ -815,7 +786,7 @@ class RevisionFormatter {
 				 * current revision), but it's likely being loaded anyways.
 				 */
 				if ( $revision->getPrevRevisionId() !== null ) {
-					$links['diff'] = $diffCallback( $title, $workflowId, $revId );
+					$links['diff'] = call_user_func( $diffCallback, $title, $workflowId, $revId );
 
 					/*
 					 * Different formatters have different terminology for the link
@@ -839,7 +810,7 @@ class RevisionFormatter {
 				 */
 				$cur = $row->currentRevision;
 				if ( !$revId->equals( $cur->getRevisionId() ) ) {
-					$links['diff-cur'] = $diffCallback( $title, $workflowId, $cur->getRevisionId(), $revId );
+					$links['diff-cur'] = call_user_func( $diffCallback, $title, $workflowId, $cur->getRevisionId(), $revId );
 					$curMsg = new Message( 'cur' );
 					$links['diff-cur']->setTitleMessage( $curMsg );
 					$links['diff-cur']->setMessage( $curMsg );
@@ -886,8 +857,7 @@ class RevisionFormatter {
 		$params = $actions->getValue( $changeType, 'history', 'i18n-params' );
 		if ( !$params ) {
 			// should we have a sigil for i18n with no parameters?
-			wfDebugLog( 'Flow', __METHOD__ . ": No i18n params for changeType $changeType on " .
-				$revision->getRevisionId()->getAlphadecimal() );
+			wfDebugLog( 'Flow', __METHOD__ . ": No i18n params for changeType $changeType on " . $revision->getRevisionId()->getAlphadecimal() );
 			return [];
 		}
 
@@ -1019,7 +989,7 @@ class RevisionFormatter {
 		case 'workflow-url':
 			return $this->urlGenerator
 				->workflowLink( null, $workflowId )
-				->getFullURL();
+				->getFullUrl();
 
 		case 'post-url':
 			if ( !$revision instanceof PostRevision ) {
@@ -1027,11 +997,11 @@ class RevisionFormatter {
 			}
 			return $this->urlGenerator
 				->postLink( null, $workflowId, $revision->getPostId() )
-				->getFullURL();
+				->getFullUrl();
 
 		case 'moderated-reason':
-			// don't parse wikitext in the moderation reason
-			return Message::plaintextParam( $revision->getModeratedReason() ?? '' );
+			// don-t parse wikitext in the moderation reason
+			return Message::plaintextParam( $revision->getModeratedReason() );
 
 		case 'topic-of-post':
 			if ( !$revision instanceof PostRevision ) {
@@ -1075,16 +1045,13 @@ class RevisionFormatter {
 
 			/** @var PostRevision $post */
 			$post = $revision->getCollection()->getPost()->getLastRevision();
-			// @phan-suppress-next-line PhanUndeclaredMethod Type not correctly inferred
 			$permissionAction = $post->isTopicTitle() ? 'view-topic-title' : 'view';
 			if ( !$this->permissions->isAllowed( $post, $permissionAction ) ) {
 				return '';
 			}
 
-			// @phan-suppress-next-line PhanUndeclaredMethod Type not correctly inferred
 			if ( $post->isTopicTitle() ) {
-				return Message::plaintextParam( $this->templating->getContent(
-					$post, 'topic-title-plaintext' ) );
+				return Message::plaintextParam( $this->templating->getContent( $post, 'topic-title-plaintext' ) );
 			} else {
 				return Message::rawParam( $this->templating->getContent( $post, 'fixed-html' ) );
 			}
@@ -1131,11 +1098,9 @@ class RevisionFormatter {
 		}
 
 		if ( $revision instanceof PostRevision && $revision->isTopicTitle() ) {
-			return $this->decideTopicTitleContentFormat(
-				$revision, $requestedRevFormat, $requestedDefaultFormat );
+			return $this->decideTopicTitleContentFormat( $revision, $requestedRevFormat, $requestedDefaultFormat );
 		} else {
-			return $this->decideNonTopicTitleContentFormat(
-				$revision, $requestedRevFormat, $requestedDefaultFormat );
+			return $this->decideNonTopicTitleContentFormat( $revision, $requestedRevFormat, $requestedDefaultFormat );
 		}
 	}
 
@@ -1149,17 +1114,12 @@ class RevisionFormatter {
 	 * @throws FlowException If a per-revision format was given and it is
 	 *  invalid for topic titles.
 	 */
-	protected function decideTopicTitleContentFormat(
-		PostRevision $topicTitle,
-		$requestedRevFormat,
-		$requestedDefaultFormat
-	) {
+	protected function decideTopicTitleContentFormat( PostRevision $topicTitle, $requestedRevFormat, $requestedDefaultFormat ) {
 		if ( $requestedRevFormat !== null ) {
 			if ( $requestedRevFormat !== 'topic-title-html' &&
 				$requestedRevFormat !== 'topic-title-wikitext'
 			) {
-				throw new FlowException( 'Per-revision format for a topic title must be ' .
-					'\'topic-title-html\' or \'topic-title-wikitext\'' );
+				throw new FlowException( 'Per-revision format for a topic title must be \'topic-title-html\' or \'topic-title-wikitext\'' );
 			}
 			return $requestedRevFormat;
 		} else {
@@ -1167,9 +1127,7 @@ class RevisionFormatter {
 
 			// Because these are both editable formats, and this is the only
 			// editable topic title format.
-			if ( $requestedDefaultFormat === 'topic-title-wikitext' || $requestedDefaultFormat === 'html' ||
-				$requestedDefaultFormat === 'wikitext'
-			) {
+			if ( $requestedDefaultFormat === 'topic-title-wikitext' || $requestedDefaultFormat === 'html' || $requestedDefaultFormat === 'wikitext' ) {
 				return 'topic-title-wikitext';
 			} else {
 				return 'topic-title-html';
@@ -1187,25 +1145,19 @@ class RevisionFormatter {
 	 * @throws FlowException If a per-revision format was given and it is
 	 *  invalid for this type
 	 */
-	protected function decideNonTopicTitleContentFormat(
-		AbstractRevision $revision,
-		$requestedRevFormat,
-		$requestedDefaultFormat
-	) {
+	protected function decideNonTopicTitleContentFormat( AbstractRevision $revision, $requestedRevFormat, $requestedDefaultFormat ) {
 		if ( $requestedRevFormat !== null ) {
 			if ( $requestedRevFormat === 'topic-title-html' ||
 				$requestedRevFormat === 'topic-title-wikitext'
 			) {
-				throw new FlowException( 'Invalid per-revision format.  Only topic titles can use  ' .
-					'\'topic-title-html\' and \'topic-title-wikitext\'' );
+				throw new FlowException( 'Invalid per-revision format.  Only topic titles can use  \'topic-title-html\' and \'topic-title-wikitext\'' );
 			}
 			return $requestedRevFormat;
 		} else {
 			if ( $requestedDefaultFormat === 'topic-title-html' ||
 				$requestedDefaultFormat === 'topic-title-wikitext'
 			) {
-				throw new FlowException( 'Default format of \'topic-title-html\' or ' .
-					'\'topic-title-wikitext\' can only be used to format topic titles.' );
+				throw new FlowException( 'Default format of \'topic-title-html\' or \'topic-title-wikitext\' can only be used to format topic titles.' );
 			}
 
 			return $requestedDefaultFormat;

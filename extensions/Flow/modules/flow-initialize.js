@@ -1,7 +1,7 @@
 /*!
  * Runs Flow code, using methods in FlowUI.
  */
-( function () {
+( function ( $ ) {
 	// Pretend we got some data and run with it
 	/*
 	 * Now do stuff
@@ -9,9 +9,7 @@
 	 */
 	$( function () {
 		var flowBoard,
-			// eslint-disable-next-line no-jquery/no-global-selector
 			$component = $( '.flow-component' ),
-			// eslint-disable-next-line no-jquery/no-global-selector
 			$board = $( '.flow-board' ),
 			pageTitle = mw.Title.newFromText( mw.config.get( 'wgPageName' ) ),
 			initializer = new mw.flow.Initializer( {
@@ -19,11 +17,6 @@
 				$component: $component,
 				$board: $board
 			} );
-
-		mw.hook( 'wikipage.content' ).add( function ( $content ) {
-			// Mark content that has been initialized by wikipage.content hook
-			$content.find( '.mw-parser-output' ).addBack( '.mw-parser-output' ).data( 'flow-wikipage-content-fired', true );
-		} );
 
 		// Set component
 		if ( !initializer.setComponentDom( $component ) ) {
@@ -43,7 +36,6 @@
 			initializer.initDataModel( {
 				pageTitle: pageTitle,
 				tocPostsLimit: 50,
-				// eslint-disable-next-line no-jquery/no-global-selector
 				renderedTopics: $( '.flow-topic' ).length,
 				boardId: $component.data( 'flow-id' ),
 				defaultSort: $board.data( 'flow-sortby' )
@@ -58,7 +50,6 @@
 			} else {
 				// Replace the no-js editor if we are editing in a
 				// new page
-				// eslint-disable-next-line no-jquery/no-global-selector
 				initializer.replaceNoJSEditor( $( '.flow-edit-post-form' ) );
 
 				// Create and replace UI widgets
@@ -84,4 +75,4 @@
 		// Preload VisualEditor
 		mw.flow.ui.EditorWidget.static.preload();
 	} );
-}() );
+}( jQuery ) );

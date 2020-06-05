@@ -2,7 +2,7 @@
  * Implements a Handlebars layer for FlowBoard.TemplateEngine
  */
 
-( function () {
+( function ( mw, $, moment, Handlebars ) {
 	var _tplcache = {},
 		_timestamp = {
 			list: [],
@@ -44,9 +44,7 @@
 			_tplcache[ templateName ] = _tplcache[ templateName ].render;
 		}
 
-		return _tplcache[ templateName ] || function () {
-			mw.flow.debug( '[Handlebars] Missing template', arguments );
-		};
+		return _tplcache[ templateName ] || function () { mw.flow.debug( '[Handlebars] Missing template', arguments ); };
 	};
 
 	/**
@@ -109,7 +107,7 @@
 		$( target ).find( 'script' ).addBack( 'script' ).filter( '[type="text/x-handlebars-template-progressive-enhancement"]' ).each( function () {
 			var $this = $( this ),
 				data = $this.data(),
-				target = data.target && data.target.trim(),
+				target = $.trim( data.target ),
 				$target = $this,
 				content, $prevTarg, $nextTarg;
 
@@ -174,7 +172,7 @@
 	 * @return {Array}
 	 */
 	function flowNormalizeL10nParameters( parameters ) {
-		return parameters.map( function ( arg ) {
+		return $.map( parameters, function ( arg ) {
 			return arg ? ( arg.raw || arg.plaintext || arg ) : '';
 		} );
 	}
@@ -330,10 +328,7 @@
 		setTimeout( timestampAutoUpdate, 100 );
 	}
 
-	if ( typeof QUnit === 'undefined' ) {
-		// FIXME: T204633
-		$( timestampAutoUpdate );
-	}
+	$( timestampAutoUpdate );
 
 	/**
 	 * Do not escape HTML string. Used as a Handlebars helper.
@@ -569,9 +564,7 @@
 	};
 
 	// Load partials
-	// eslint-disable-next-line no-jquery/no-each-util
 	$.each( mw.templates.get(), function ( moduleName, moduleTemplates ) {
-		// eslint-disable-next-line no-jquery/no-each-util
 		$.each( moduleTemplates, function ( name ) {
 			// remove extension
 			var partialMatch, partialName;
@@ -603,4 +596,4 @@
 	Handlebars.registerHelper( 'ifCond', FlowHandlebars.prototype.ifCond );
 	Handlebars.registerHelper( 'debug', FlowHandlebars.prototype.debug );
 
-}() );
+}( mediaWiki, jQuery, moment, Handlebars ) );

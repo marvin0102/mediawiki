@@ -10,9 +10,7 @@ use Flow\Exception\FailCommitException;
 use Flow\Exception\InvalidDataException;
 use Flow\Exception\InvalidActionException;
 use Flow\Model\Workflow;
-use FormatJson;
 use IContextSource;
-use MediaWiki\Logger\LoggerFactory;
 use SplQueue;
 
 class SubmissionHandler {
@@ -82,21 +80,13 @@ class SubmissionHandler {
 				$type[] = get_class( $block );
 			}
 			// All blocks returned null, nothing knows how to handle this action
-			throw new InvalidActionException( "No block accepted the '$action' action: " .
-				implode( ',', array_unique( $type ) ), 'invalid-action' );
+			throw new InvalidActionException( "No block accepted the '$action' action: " .  implode( ',', array_unique( $type ) ), 'invalid-action' );
 		}
 
 		// Check mediawiki core permissions for title protection, blocked
 		// status, etc.
 		$errors = $workflow->getPermissionErrors( 'edit', $context->getUser(), 'secure' );
 		if ( count( $errors ) ) {
-			LoggerFactory::getInstance( 'Flow' )->error( 'Got permission errors for user {user} attempting action "{action}".',
-				[
-					'action' => $action,
-					'user' => $context->getUser()->getName(),
-					'errors' => FormatJson::encode( $errors )
-				]
-			);
 			foreach ( $errors as $errorMsgArgs ) {
 				$msg = wfMessage( array_shift( $errorMsgArgs ) );
 				if ( $errorMsgArgs ) {
@@ -116,7 +106,7 @@ class SubmissionHandler {
 		$success = true;
 		foreach ( $interestedBlocks as $block ) {
 			$name = $block->getName();
-			$data = $parameters[$name] ?? [];
+			$data = isset( $parameters[$name] ) ? $parameters[$name] : [];
 			$success &= $block->onSubmit( $data );
 		}
 

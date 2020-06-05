@@ -3,7 +3,7 @@
  * This is functionality that is used by both types of page, but not any other components.
  */
 
-( function () {
+( function ( $, mw ) {
 	var inTopicNamespace = mw.config.get( 'wgNamespaceNumber' ) === mw.config.get( 'wgNamespaceIds' ).topic;
 
 	/**
@@ -143,7 +143,7 @@
 			role = $this.data( 'role' ),
 			template = $this.data( 'flow-template' ),
 			params = {
-				editToken: mw.user.tokens.get( 'csrfToken' ), // might be unnecessary
+				editToken: mw.user.tokens.get( 'editToken' ), // might be unnecessary
 				submitted: {
 					moderationState: role
 				},
@@ -244,7 +244,7 @@
 		flowComponent.emitWithReturn( 'removeError', $form );
 
 		// Trigger the cancel callback
-		callbacks.forEach( function ( fn ) {
+		$.each( callbacks, function ( idx, fn ) {
 			fn.call( target, event );
 		} );
 
@@ -265,4 +265,4 @@
 		return inTopicNamespace && ( !$el || $el.closest( '.flow-post' ).length === 0 );
 	}
 	FlowBoardAndHistoryComponentBase.static.inTopicNamespace = flowBoardInTopicNamespace;
-}() );
+}( jQuery, mediaWiki ) );

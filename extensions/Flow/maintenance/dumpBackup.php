@@ -7,12 +7,9 @@ $maintPath = ( getenv( 'MW_INSTALL_PATH' ) !== false
 	? getenv( 'MW_INSTALL_PATH' ) . '/maintenance'
 	: __DIR__ . '/../../../maintenance' );
 require_once $maintPath . '/Maintenance.php';
-require_once $maintPath . '/includes/BackupDumper.php';
+require_once $maintPath . '/backup.inc';
 
 class FlowDumpBackup extends BackupDumper {
-	public $workflowStartId = "";
-	public $workflowEndId = "";
-
 	public function __construct( $args = null ) {
 		parent::__construct();
 
@@ -36,8 +33,6 @@ TEXT
 
 		$this->addOption( 'start', 'Start from page_id n', false, true );
 		$this->addOption( 'end', 'Stop before page_id n (exclusive)', false, true );
-		$this->addOption( 'boardstart', 'Start from board id n', false, true );
-		$this->addOption( 'boardend', 'Stop before board_id n (exclusive)', false, true );
 		$this->addOption( 'skip-header', 'Don\'t output the <mediawiki> header' );
 		$this->addOption( 'skip-footer', 'Don\'t output the </mediawiki> footer' );
 
@@ -51,7 +46,7 @@ TEXT
 
 	public function execute() {
 		// Stop if Flow not enabled on the wiki
-		if ( !class_exists( FlowHooks::class ) ) {
+		if ( !class_exists( 'FlowHooks' ) ) {
 			echo "Flow isn't enabled on this wiki.\n";
 			die( 1 );
 		}
@@ -79,15 +74,14 @@ TEXT
 		}
 
 		$db = Container::get( 'db.factory' )->getDB( DB_REPLICA );
-		$exporter = new Exporter( $db, $history, Exporter::TEXT );
+		$exporter = new Exporter( $db, $history, Exporter::STREAM, Exporter::TEXT );
 		$exporter->setOutputSink( $this->sink );
 
 		if ( !$this->skipHeader ) {
 			$exporter->openStream();
 		}
 
-		$workflowIterator = $exporter->getWorkflowIterator( $this->pages, $this->startId, $this->endId,
-			$this->workflowStartId, $this->workflowEndId );
+		$workflowIterator = $exporter->getWorkflowIterator( $this->pages, $this->startId, $this->endId );
 
 		$exporter->dump( $workflowIterator );
 
@@ -127,18 +121,10 @@ TEXT
 			$this->endId = intval( $this->getOption( 'end' ) );
 		}
 
-		if ( $this->hasOption( 'boardstart' ) ) {
-			$this->workflowStartId = $this->getOption( 'boardstart' );
-		}
-
-		if ( $this->hasOption( 'boardend' ) ) {
-			$this->workflowEndId = $this->getOption( 'boardend' );
-		}
-
 		$this->skipHeader = $this->hasOption( 'skip-header' );
 		$this->skipFooter = $this->hasOption( 'skip-footer' );
 	}
 }
 
-$maintClass = FlowDumpBackup::class;
+$maintClass = 'FlowDumpBackup';
 require_once RUN_MAINTENANCE_IF_MAIN;

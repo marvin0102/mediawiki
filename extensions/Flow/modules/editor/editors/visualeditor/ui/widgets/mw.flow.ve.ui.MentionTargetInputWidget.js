@@ -1,4 +1,4 @@
-( function () {
+( function ( $, mw, OO ) {
 	'use strict';
 
 	/**
@@ -14,8 +14,7 @@
 	 *   without duplicates.
 	 */
 	mw.flow.ve.ui.MentionTargetInputWidget = function FlowVeUiMentionTargetInputWidget( config ) {
-		// Parent constructor
-		mw.flow.ve.ui.MentionTargetInputWidget.super.call(
+		mw.flow.ve.ui.MentionTargetInputWidget.parent.call(
 			this,
 			$.extend(
 				{ placeholder: mw.msg( 'flow-ve-mention-placeholder' ) },
@@ -29,7 +28,7 @@
 		// Properties
 		this.username = null;
 		// Exclude anonymous users, since they do not receive pings.
-		this.loggedInTopicPosters = ( config.topicPosters || [] ).filter( function ( poster ) {
+		this.loggedInTopicPosters = $.grep( config.topicPosters || [], function ( poster ) {
 			return !mw.util.isIPAddress( poster, false );
 		} );
 		// TODO do this in a more sensible place in the future
@@ -86,13 +85,12 @@
 	 */
 	mw.flow.ve.ui.MentionTargetInputWidget.prototype.getLookupRequest = function () {
 		var xhr,
-			widget = this,
 			initialUpperValue = this.value.charAt( 0 ).toUpperCase() + this.value.slice( 1 );
 
 		if ( this.value === '' ) {
 			return $.Deferred()
 				.resolve( this.loggedInTopicPosters.slice() )
-				.promise( { abort: function () {} } );
+				.promise( { abort: $.noop } );
 		}
 
 		xhr = new mw.Api().get( {
@@ -104,14 +102,10 @@
 		} );
 		return xhr
 			.then( function ( data ) {
-				var allUsers = ( OO.getProp( data, 'query', 'allusers' ) || [] ).map( function ( user ) {
+				return $.map( OO.getProp( data, 'query', 'allusers' ) || [], function ( user ) {
 					mw.flow.ve.userCache.setFromApiData( user );
 					return user.name;
 				} );
-				// Append prefix-matches from the topic list
-				return OO.unique( widget.loggedInTopicPosters.filter( function ( poster ) {
-					return poster.indexOf( initialUpperValue ) === 0;
-				} ).concat( allUsers ) );
 			} )
 			.promise( { abort: xhr.abort } );
 	};
@@ -127,7 +121,7 @@
 	 * @return {OO.ui.MenuOptionWidget[]} Menu items
 	 */
 	mw.flow.ve.ui.MentionTargetInputWidget.prototype.getLookupMenuOptionsFromData = function ( data ) {
-		return data.map( function ( username ) {
+		return $.map( data, function ( username ) {
 			return new OO.ui.MenuOptionWidget( {
 				data: username,
 				label: username
@@ -152,4 +146,4 @@
 			this.username = item.getData();
 		}
 	};
-}() );
+}( jQuery, mediaWiki, OO ) );

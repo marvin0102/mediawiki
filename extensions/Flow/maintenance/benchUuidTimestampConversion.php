@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../../maintenance/benchmarks/Benchmarker.php';
 class BenchUuidConversions extends \Benchmarker {
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( 'Benchmark uuid timstamp extraction implementations' );
+		$this->mDescription = 'Benchmark uuid timstamp extraction implementations';
 	}
 
 	public function execute() {
@@ -70,8 +70,7 @@ class BenchUuidConversions extends \Benchmarker {
 			],
 		] );
 
-		// @fixme Find a replacement for this (removed from core in 1.29)
-		// $this->output( $this->getFormattedResults() );
+		$this->output( $this->getFormattedResults() );
 	}
 
 	public function oldhex2timestamp( $hex ) {
@@ -132,5 +131,5 @@ class BenchUuidConversions extends \Benchmarker {
 	}
 }
 
-$maintClass = BenchUuidConversions::class;
+$maintClass = 'BenchUuidConversions';
 require_once RUN_MAINTENANCE_IF_MAIN;
